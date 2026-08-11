@@ -168,6 +168,16 @@ export const adminBookings = (token, params = {}) =>
     headers: { Authorization: `Bearer ${token}` },
   })
 
+export const adminBookingUnseenCounts = token =>
+  request('GET', '/admin/bookings/unseen-counts', null, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+export const adminAckBookingSeen = (token, bookingId, body) =>
+  request('POST', `/admin/bookings/${bookingId}/ack-seen`, body, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
 export const adminBooking = (token, bookingId) =>
   request('GET', `/admin/bookings/${bookingId}`, null, {
     headers: { Authorization: `Bearer ${token}` },

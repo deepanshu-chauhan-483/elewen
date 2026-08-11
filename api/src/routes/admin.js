@@ -7,6 +7,8 @@ import {
   deleteAdminCoupon,
   shareAdminCoupon,
   getAdminBooking,
+  getAdminBookingUnseenCounts,
+  ackAdminBookingSeen,
   getAdminMessageThread,
   getAdminOverview,
   getAdminPaymentWorkspace,
@@ -64,12 +66,14 @@ router.get('/session', getAdminSession)
 router.get('/overview', getAdminOverview)
 
 router.get('/bookings', listAdminBookings)
+router.get('/bookings/unseen-counts', getAdminBookingUnseenCounts)
 router.get('/bookings/:id', getAdminBooking)
 router.get('/bookings/:id/coupon-suggestion', getAdminBookingCouponSuggestion)
 router.post('/bookings/:id/send-referral-coupon', sendAdminReferralCoupon)
 router.patch('/bookings/:id/status', updateAdminBookingStatus)
 router.post('/bookings/:id/cod/collect', collectAdminBookingCod)
 router.post('/bookings/:id/payments/manual', recordAdminManualPayment)
+router.post('/bookings/:id/ack-seen', ackAdminBookingSeen)
 router.post('/upload-image', uploadAdminDesignImage)
 router.post('/bookings/:id/preview-personalization-email', previewAdminBookingPersonalizationEmail)
 router.post('/bookings/:id/send-personalization-email', sendAdminBookingPersonalizationEmail)

@@ -13,6 +13,8 @@ import {
   adminPreviewPersonalizationEmail,
   adminUploadDesignImage,
   adminBookings,
+  adminBookingUnseenCounts,
+  adminAckBookingSeen,
   adminConsultations,
   adminCoupons,
   adminCreateCoupon,
@@ -170,6 +172,27 @@ export function useAdminBookings(params = {}) {
   return useAuthedAdminQuery({
     queryKey: ['admin', 'bookings', JSON.stringify(params)],
     queryFn: token => adminBookings(token, params),
+  })
+}
+
+export function useAdminBookingUnseenCounts() {
+  return useAuthedAdminQuery({
+    queryKey: ['admin', 'bookings', 'unseen-counts'],
+    queryFn: token => adminBookingUnseenCounts(token),
+    refetchOnWindowFocus: true,
+  })
+}
+
+export function useAdminAckBookingSeen() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ bookingId, kind }) =>
+      withAdminToken(token => adminAckBookingSeen(token, bookingId, { kind })),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'bookings', 'unseen-counts'] })
+    },
   })
 }
 

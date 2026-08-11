@@ -14,6 +14,8 @@ import {
   useAdminBooking,
   useAdminBookingCouponSuggestion,
   useAdminBookings,
+  useAdminBookingUnseenCounts,
+  useAdminAckBookingSeen,
   useAdminCreateVendorAssignment,
   useAdminSendReferralCoupon,
   useAdminPreviewPersonalizationEmail,
@@ -1363,7 +1365,7 @@ function CustomerInformationSection({ booking }) {
 // ---------------------------------------------------------------------------
 // Admin Booking Accordion Card
 // ---------------------------------------------------------------------------
-function BookingAccordionCard({ booking, open = false, onToggle, onStatusUpdated }) {
+function BookingAccordionCard({ booking, open = false, onToggle, onStatusUpdated, unseen = false }) {
   const [statusInput, setStatusInput] = useState(booking.status ?? '')
   const [statusNote, setStatusNote] = useState('')
   const [internalNote, setInternalNote] = useState('')
@@ -1463,8 +1465,10 @@ function BookingAccordionCard({ booking, open = false, onToggle, onStatusUpdated
     <div
       id={booking?.id ? `booking-card-${booking.id}` : undefined}
       className={[
-        'rounded-2xl bg-white shadow-sm transition-all hover:shadow-md',
+        'rounded-2xl shadow-sm transition-all hover:shadow-md',
+        unseen ? 'bg-[#FFF8EB]' : 'bg-white',
         open ? `border-t-4 ${borderColor}` : `border-l-4 ${borderColor}`,
+        unseen ? 'ring-1 ring-[#F0D9A8]' : '',
       ].join(' ')}
     >
       {/* ── Collapsed / header row — always visible ── */}
@@ -1883,6 +1887,7 @@ export default function BookingManagementPage() {
   const [cancelledBy, setCancelledBy] = useState(initialCancelledBy)
   const [sortBy, setSortBy] = useState('latest')
   const [currentPage, setCurrentPage] = useState(1)
+  const [clearedUnseenIds, setClearedUnseenIds] = useState(() => new Set())
   const PAGE_SIZE = 10
   const debouncedSearch = useDebouncedValue(search)
 
@@ -1919,12 +1924,29 @@ export default function BookingManagementPage() {
     page: currentPage,
     limit: PAGE_SIZE,
   })
+  const unseenCountsQuery = useAdminBookingUnseenCounts()
+  const ackSeenMutation = useAdminAckBookingSeen()
   const bookings = bookingsQuery.data?.bookings ?? []
   const totalBookings = Number(bookingsQuery.data?.total ?? 0)
   const totalPages = Math.max(1, Number(bookingsQuery.data?.pages ?? 1))
   const isResultsLoading = bookingsQuery.isFetching && !bookingsQuery.isLoading
   const linkedOpenBookingId = String(openBookingId || '').trim()
   const openedBookingQuery = useAdminBooking(linkedOpenBookingId || null)
+  const todayUnseenCount = Number(unseenCountsQuery.data?.today ?? 0)
+  const cancelledUnseenCount = Number(unseenCountsQuery.data?.cancelled ?? 0)
+
+  const markBookingSeen = booking => {
+    if (!booking?.id || !booking.unseen || clearedUnseenIds.has(booking.id)) return
+    const kind =
+      String(booking.status ?? '').toLowerCase() === 'cancelled' ? 'cancelled' : 'new'
+
+    setClearedUnseenIds(current => {
+      const next = new Set(current)
+      next.add(booking.id)
+      return next
+    })
+    ackSeenMutation.mutate({ bookingId: booking.id, kind })
+  }
 
   // Drop deep-link pin once the open booking no longer belongs in this bucket
   // (cancel on Today must not keep showing "Cancelled by admin" here).
@@ -2003,7 +2025,14 @@ export default function BookingManagementPage() {
           Filter Bookings
         </p>
         <div className="mb-3 flex flex-wrap gap-2">
-          {bookingBucketTabs.map(tab => (
+          {bookingBucketTabs.map(tab => {
+            const unseenForTab =
+              tab.key === 'today'
+                ? todayUnseenCount
+                : tab.key === 'cancelled'
+                  ? cancelledUnseenCount
+                  : 0
+            return (
             <button
               key={tab.key}
               type="button"
@@ -2014,15 +2043,30 @@ export default function BookingManagementPage() {
                 setCurrentPage(1)
               }}
               className={[
-                'rounded-full border px-4 py-2 text-sm font-semibold transition',
+                'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition',
                 bucket === tab.key
                   ? 'border-[#D4BA8E] bg-[#D4BA8E] text-[#FAFAFA]'
                   : 'border-[#E4DED8] bg-white text-[#6B7280] hover:border-[#D4BA8E] hover:text-[#7A5C2E]',
               ].join(' ')}
             >
-              {tab.label}
+              <span>{tab.label}</span>
+              {unseenForTab > 0 ? (
+                <span
+                  className={[
+                    'inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-bold',
+                    bucket === tab.key
+                      ? 'bg-[#FAFAFA] text-[#7A5C2E]'
+                      : tab.key === 'cancelled'
+                        ? 'bg-[#8A1C1C] text-white'
+                        : 'bg-[#C07318] text-white',
+                  ].join(' ')}
+                >
+                  {unseenForTab > 99 ? '99+' : unseenForTab}
+                </span>
+              ) : null}
             </button>
-          ))}
+            )
+          })}
         </div>
         {bucket === 'cancelled' ? (
           <div className="mb-3 flex flex-wrap gap-2">
@@ -2113,11 +2157,13 @@ export default function BookingManagementPage() {
           </CustomSelect>
         </div>
         <p className="mt-3 text-xs text-[#8F8F8F]">
-          Today shows bookings placed today with advance paid (Hookah COD allowed at ₹0). Unpaid
-          non-Hookah stay in Incomplete. Admin/customer cancels leave Today and appear under
-          Cancelled. Upcoming shows advance-paid events in the next 15 days. Live shows all
-          advance-paid ongoing bookings. Incomplete shows bookings with no advance paid yet.
-          Completed shows finished bookings with full payment cleared.
+          Today shows bookings placed today with advance paid (Hookah COD allowed at ₹0), plus any
+          unopened advance-paid bookings from the last 7 days. Open a card to clear its badge.
+          Unpaid non-Hookah stay in Incomplete. Admin/customer cancels leave Today and appear under
+          Cancelled (newest cancellations first; unopened cancels stay highlighted). Upcoming shows
+          advance-paid events in the next 15 days. Live shows all advance-paid ongoing bookings.
+          Incomplete shows bookings with no advance paid yet. Completed shows finished bookings with
+          full payment cleared.
         </p>
       </div>
 
@@ -2148,14 +2194,22 @@ export default function BookingManagementPage() {
       ) : displayBookings.length ? (
         <div>
           <div className="space-y-3">
-            {displayBookings.map(booking => (
+            {displayBookings.map(booking => {
+              const isUnseen =
+                Boolean(booking.unseen) && !clearedUnseenIds.has(booking.id)
+              return (
               <BookingAccordionCard
                 key={`${booking.id}:${booking.status ?? ''}`}
                 booking={booking}
+                unseen={isUnseen}
                 open={openBookingId === booking.id}
-                onToggle={() =>
-                  setOpenBookingId(current => (current === booking.id ? '' : booking.id))
-                }
+                onToggle={() => {
+                  const nextOpenId = openBookingId === booking.id ? '' : booking.id
+                  setOpenBookingId(nextOpenId)
+                  if (nextOpenId && isUnseen) {
+                    markBookingSeen(booking)
+                  }
+                }}
                 onStatusUpdated={(_bookingId, nextStatus) => {
                   const preview = {
                     ...booking,
@@ -2167,7 +2221,8 @@ export default function BookingManagementPage() {
                   }
                 }}
               />
-            ))}
+              )
+            })}
           </div>
 
           <div className="mt-4 flex justify-end gap-2">

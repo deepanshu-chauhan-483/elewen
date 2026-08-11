@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-11: Admin Today bookings vanished next day; cancels sorted by booking age
+
+**Root cause:** Today's Bookings filtered strictly by IST `createdAt` day with no admin-seen tracking, so unopened bookings disappeared after midnight. Cancelled and Payment Cancelled/Refunds lists ordered by `booking.createdAt`, so a newly cancelled old booking appeared at the bottom.
+
+**Failure symptoms:** Admins opening the panel next day could not find yesterday's unopened Today bookings; fresh cancellations/refunds looked buried.
+
+**Fix details:** Added `adminNewSeenAt` / `adminCancelSeenAt`, Today includes unopened advance-paid bookings within 7 IST days, tab badges + row highlight until accordion open (`ack-seen`), cancelled lists sort by `Cancellation.createdAt` desc.
+
+**Consulted sources:** `admin.js` listAdminBookings / payment workspace, `BookingManagementPage.jsx`, `cancellationPolicy.js`
+
+**Prevention guidance:** Admin attention lists should sort by the event that needs attention (cancel/refund time), and persist unseen state until an explicit open acknowledgment.
+
 ## 2026-08-11: Message Box showed email instead of customer name
 
 **Root cause:** `MessageBoxPage.getCustomerDisplay` used only `booking.customer.name` from profile/`up_users`. Email-signup users often have empty profile names, so the thread title fell back to email (e.g. `bansalgauri23@gmail.com`) while Swati-style accounts with profile names looked correct.

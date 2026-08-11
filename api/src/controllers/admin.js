@@ -247,6 +247,47 @@ function getIstDayBounds(dateKey = getIstDateKey()) {
   }
 }
 
+/** Start of the rolling 7-day IST window used for unseen Today backlog. */
+function getUnseenTodayCreatedSince() {
+  return getIstDayBounds(addDaysToDateKey(getIstDateKey(), -6)).gte
+}
+
+function isCreatedOnIstDay(booking, dateKey = getIstDateKey()) {
+  const createdAt = booking?.createdAt ? new Date(booking.createdAt) : null
+  if (!createdAt || Number.isNaN(createdAt.getTime())) return false
+  const bounds = getIstDayBounds(dateKey)
+  return createdAt >= bounds.gte && createdAt < bounds.lt
+}
+
+function isCreatedWithinUnseenTodayWindow(booking) {
+  const createdAt = booking?.createdAt ? new Date(booking.createdAt) : null
+  if (!createdAt || Number.isNaN(createdAt.getTime())) return false
+  return createdAt >= getUnseenTodayCreatedSince()
+}
+
+function getCancellationSortTime(booking) {
+  const cancelAt = booking?.cancellation?.createdAt
+    ? new Date(booking.cancellation.createdAt).getTime()
+    : NaN
+  if (Number.isFinite(cancelAt)) return cancelAt
+
+  const cancelLog = (Array.isArray(booking?.statusLogs) ? booking.statusLogs : []).find(
+    log => String(log?.newStatus ?? '').toLowerCase() === 'cancelled'
+  )
+  const logAt = cancelLog?.createdAt ? new Date(cancelLog.createdAt).getTime() : NaN
+  if (Number.isFinite(logAt)) return logAt
+
+  const updatedAt = booking?.updatedAt ? new Date(booking.updatedAt).getTime() : NaN
+  if (Number.isFinite(updatedAt)) return updatedAt
+
+  const createdAt = booking?.createdAt ? new Date(booking.createdAt).getTime() : 0
+  return Number.isFinite(createdAt) ? createdAt : 0
+}
+
+function sortBookingsByCancellationTimeDesc(bookings = []) {
+  return [...bookings].sort((left, right) => getCancellationSortTime(right) - getCancellationSortTime(left))
+}
+
 function getDateRange(bucket = 'all') {
   // Use Asia/Kolkata calendar days so eventDate DATE filters match India.
   const todayKey = getIstDateKey()
@@ -960,12 +1001,18 @@ function buildBookingBucketFilter(bucket = 'all') {
     }
   }
 
-  // Today's bookings = placed by customer today (createdAt), not eventDate today.
+  // Today's bookings = placed today, or still-unseen within the last 7 IST days.
   // Cancelled bookings leave Today and appear under Cancelled.
   if (bucket === 'today') {
     return {
-      createdAt: getIstDayBounds(),
       status: { notIn: ['cancelled'] },
+      OR: [
+        { createdAt: getIstDayBounds() },
+        {
+          adminNewSeenAt: null,
+          createdAt: { gte: getUnseenTodayCreatedSince() },
+        },
+      ],
     }
   }
 
@@ -999,6 +1046,36 @@ function isAdvanceSatisfied(booking) {
     return paid > 0 || String(booking?.status ?? '').toLowerCase() !== 'new'
   }
   return paid + 1e-9 >= advanceAmount
+}
+
+function isTodayUnseen(booking) {
+  const status = String(booking?.status ?? '').toLowerCase()
+  if (status === 'cancelled' || status === 'completed') return false
+  if (booking?.adminNewSeenAt) return false
+  if (!isAdvanceSatisfied(booking)) return false
+  return isCreatedWithinUnseenTodayWindow(booking)
+}
+
+function isCancelUnseen(booking) {
+  return String(booking?.status ?? '').toLowerCase() === 'cancelled' && !booking?.adminCancelSeenAt
+}
+
+function bookingMatchesCancelledList(booking, cancelledBy = '') {
+  const status = String(booking?.status ?? '').toLowerCase()
+  if (status !== 'cancelled') return false
+  const paid = getSuccessfulPaidAmount(booking)
+  const advanceAmount = toNumber(booking?.advanceAmount)
+  const source = getCancellationSource(booking)
+  const normalizedCancelledBy = String(cancelledBy ?? '')
+    .trim()
+    .toLowerCase()
+  if (normalizedCancelledBy === 'client' || normalizedCancelledBy === 'admin') {
+    if (source !== normalizedCancelledBy) return false
+  }
+  if (advanceAmount > 0 && paid + 1e-9 < advanceAmount) {
+    return source === 'admin'
+  }
+  return true
 }
 
 function getCancellationSource(booking) {
@@ -1039,10 +1116,12 @@ function bookingMatchesOperationalBucket(booking, bucket = 'all', cancelledBy = 
     .trim()
     .toLowerCase()
 
-  // Today = created today + advance paid (or Hookah COD). Unpaid non-Hookah → Incomplete.
+  // Today = created today + advance paid, or still-unseen within 7 IST days + advance paid.
   // Cancelled never stay in Today.
   if (bucket === 'today') {
-    return status !== 'cancelled' && isAdvanceSatisfied(booking)
+    if (status === 'cancelled' || !isAdvanceSatisfied(booking)) return false
+    if (isCreatedOnIstDay(booking)) return true
+    return isTodayUnseen(booking)
   }
 
   if (bucket === 'live' || bucket === 'active') {
@@ -1098,6 +1177,23 @@ function withCancellationSource(booking) {
     return { ...booking, cancelledBy: null }
   }
   return { ...booking, cancelledBy: getCancellationSource(booking) }
+}
+
+function withAdminUnseenFlags(booking, bucket = '') {
+  const withSource = withCancellationSource(booking)
+  const normalizedBucket = String(bucket ?? '')
+    .trim()
+    .toLowerCase()
+  if (normalizedBucket === 'cancelled') {
+    return { ...withSource, unseen: isCancelUnseen(withSource) }
+  }
+  if (normalizedBucket === 'today') {
+    return {
+      ...withSource,
+      unseen: !withSource.adminNewSeenAt && String(withSource.status ?? '').toLowerCase() !== 'cancelled',
+    }
+  }
+  return { ...withSource, unseen: false }
 }
 
 function buildPaymentSummaryFromPayments(payments = []) {
@@ -1798,7 +1894,11 @@ export async function listAdminBookings(req, res, next) {
     }
 
     const orderByClause =
-      sortBy === 'latest' ? [{ createdAt: 'desc' }] : [{ eventDate: 'asc' }, { createdAt: 'desc' }]
+      bucket === 'cancelled'
+        ? [{ cancellation: { createdAt: 'desc' } }, { updatedAt: 'desc' }, { createdAt: 'desc' }]
+        : sortBy === 'latest'
+          ? [{ createdAt: 'desc' }]
+          : [{ eventDate: 'asc' }, { createdAt: 'desc' }]
 
     const bookingInclude = {
       items: true,
@@ -1811,6 +1911,7 @@ export async function listAdminBookings(req, res, next) {
 
     let enrichedBookings = []
     let total = 0
+    let unseenCount = 0
     let statusCounts = BOOKING_STATUSES.reduce((acc, key) => {
       acc[key] = 0
       return acc
@@ -1824,19 +1925,36 @@ export async function listAdminBookings(req, res, next) {
         orderBy: orderByClause,
       })
       const enrichedCandidates = await enrichBookingsWithCustomer(bookings)
-      const matchingBookings = enrichedCandidates
+      let matchingBookings = enrichedCandidates
         .filter(booking => (search ? bookingMatchesSearch(booking, search) : true))
         .filter(booking =>
           needsPaymentAwareFilter
             ? bookingMatchesOperationalBucket(booking, bucket, cancelledBy)
             : true
         )
+      if (bucket === 'cancelled') {
+        matchingBookings = sortBookingsByCancellationTimeDesc(matchingBookings)
+      }
       const visibleBookings = hasStatusFilter
         ? matchingBookings.filter(booking => booking.status === status)
         : matchingBookings
 
       total = visibleBookings.length
-      enrichedBookings = visibleBookings.slice(skip, skip + limit).map(withCancellationSource)
+      if (bucket === 'today') {
+        unseenCount = visibleBookings.filter(
+          booking =>
+            !booking.adminNewSeenAt &&
+            String(booking?.status ?? '').toLowerCase() !== 'cancelled' &&
+            isAdvanceSatisfied(booking)
+        ).length
+      } else if (bucket === 'cancelled') {
+        unseenCount = visibleBookings.filter(booking => isCancelUnseen(booking)).length
+      } else {
+        unseenCount = 0
+      }
+      enrichedBookings = visibleBookings
+        .slice(skip, skip + limit)
+        .map(booking => withAdminUnseenFlags(booking, bucket))
       statusCounts = matchingBookings.reduce((acc, booking) => {
         if (booking?.status && BOOKING_STATUSES.includes(booking.status)) {
           acc[booking.status] += 1
@@ -1870,7 +1988,9 @@ export async function listAdminBookings(req, res, next) {
         }),
       ])
 
-      enrichedBookings = (await enrichBookingsWithCustomer(bookings)).map(withCancellationSource)
+      enrichedBookings = (await enrichBookingsWithCustomer(bookings)).map(booking =>
+        withAdminUnseenFlags(booking, bucket)
+      )
       total = count
       statusCountRows.forEach(row => {
         if (row?.status && BOOKING_STATUSES.includes(row.status)) {
@@ -1889,9 +2009,106 @@ export async function listAdminBookings(req, res, next) {
       bookings: enrichedBookings,
       metrics,
       statusCounts,
+      unseenCount,
       page,
       pages: Math.max(1, Math.ceil(total / limit)),
       total,
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function getAdminBookingUnseenCounts(req, res, next) {
+  try {
+    const [todayCandidates, cancelledCandidates] = await Promise.all([
+      prisma.booking.findMany({
+        where: buildBookingBucketFilter('today'),
+        include: {
+          payments: { orderBy: { createdAt: 'desc' } },
+          cancellation: true,
+          statusLogs: { orderBy: { createdAt: 'desc' }, take: 5 },
+        },
+      }),
+      prisma.booking.findMany({
+        where: buildBookingBucketFilter('cancelled'),
+        include: {
+          payments: { orderBy: { createdAt: 'desc' } },
+          cancellation: true,
+          statusLogs: { orderBy: { createdAt: 'desc' }, take: 5 },
+        },
+      }),
+    ])
+
+    const today = todayCandidates.filter(booking =>
+      bookingMatchesOperationalBucket(booking, 'today')
+    ).filter(
+      booking =>
+        !booking.adminNewSeenAt &&
+        String(booking?.status ?? '').toLowerCase() !== 'cancelled' &&
+        isAdvanceSatisfied(booking)
+    ).length
+
+    const cancelled = cancelledCandidates
+      .filter(booking => bookingMatchesCancelledList(booking))
+      .filter(booking => isCancelUnseen(booking)).length
+
+    res.json({ today, cancelled })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function ackAdminBookingSeen(req, res, next) {
+  try {
+    const bookingId = req.params.id
+    const kind = normalizeText(req.body?.kind).toLowerCase()
+    if (kind !== 'new' && kind !== 'cancelled') {
+      return res.status(400).json({ error: 'kind must be "new" or "cancelled"' })
+    }
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      select: {
+        id: true,
+        status: true,
+        adminNewSeenAt: true,
+        adminCancelSeenAt: true,
+      },
+    })
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' })
+    }
+
+    const now = new Date()
+    const data =
+      kind === 'cancelled'
+        ? booking.adminCancelSeenAt
+          ? {}
+          : { adminCancelSeenAt: now }
+        : booking.adminNewSeenAt
+          ? {}
+          : { adminNewSeenAt: now }
+
+    const updated =
+      Object.keys(data).length > 0
+        ? await prisma.booking.update({
+            where: { id: bookingId },
+            data,
+            select: {
+              id: true,
+              status: true,
+              adminNewSeenAt: true,
+              adminCancelSeenAt: true,
+            },
+          })
+        : booking
+
+    res.json({
+      ok: true,
+      booking: updated,
+      unseen:
+        kind === 'cancelled' ? isCancelUnseen(updated) : !updated.adminNewSeenAt,
     })
   } catch (err) {
     next(err)
@@ -3545,7 +3762,7 @@ export async function getAdminPaymentWorkspace(req, res, next) {
           },
           vendorAssignments: true,
         },
-        orderBy: [{ createdAt: 'desc' }],
+        orderBy: [{ cancellation: { createdAt: 'desc' } }, { updatedAt: 'desc' }, { createdAt: 'desc' }],
         take: 100,
       }),
       safeStrapiServerGet('/api/global-setting?publicationState=preview', { data: null }),
@@ -3615,7 +3832,9 @@ export async function getAdminPaymentWorkspace(req, res, next) {
     const postEventPending = enrichedPostEventBookings
       .map(buildBookingPaymentSnapshot)
       .filter(booking => booking.outstandingAmount > 0)
-    const cancelledRefunds = enrichedCancelledBookings.map(buildCancelledBookingRefundSnapshot)
+    const cancelledRefunds = sortBookingsByCancellationTimeDesc(enrichedCancelledBookings).map(
+      buildCancelledBookingRefundSnapshot
+    )
     const withPaymentBookingSummary = payment => {
       const booking = bookingMap.get(String(payment.bookingId))
       return {

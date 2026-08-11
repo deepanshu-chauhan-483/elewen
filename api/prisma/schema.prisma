@@ -234,6 +234,8 @@ model Booking {
   infoStatus       InfoStatus?
   feedbackSubmitted Boolean      @default(false)
   expiryDate       DateTime?     @db.Date
+  adminNewSeenAt   DateTime?     // Admin opened this booking while active (clears Today unseen)
+  adminCancelSeenAt DateTime?    // Admin opened this booking while cancelled (clears Cancelled unseen)
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
