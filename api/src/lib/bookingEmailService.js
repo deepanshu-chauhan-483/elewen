@@ -150,6 +150,8 @@ export function buildBookingEmailContext(booking, extras = {}) {
 
   const bookingPath = customerBookingDetailsPath(booking.id)
   const appUrl = APP_URL()
+  const paymentQrOverride = String(process.env.PAYMENT_QR_IMAGE_URL || '').trim()
+  const paymentQrUrl = paymentQrOverride || `${appUrl}/email/upi-payment-qr.jpg`
 
   return {
     bookingId: booking.id,
@@ -172,6 +174,7 @@ export function buildBookingEmailContext(booking, extras = {}) {
     isFullyPaid: remainingBalance <= 0,
     updateDetailsUrl: customerInfoCollectionUrl(booking.id),
     paymentUrl: `${appUrl}${bookingPath}`,
+    paymentQrUrl,
     feedbackUrl: `${appUrl}${bookingPath}`,
     bookingUrl: `${appUrl}${bookingPath}`,
     supportPhone: SUPPORT_PHONE,

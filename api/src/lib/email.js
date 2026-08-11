@@ -804,9 +804,27 @@ export const templates = {
     remainingBalanceRaw,
     remainingBalance,
     paymentUrl,
+    paymentQrUrl,
     supportPhone,
-  }) =>
-    layout(
+  }) => {
+    const qrSrc = String(paymentQrUrl || '').trim()
+    const paymentQrBlock = qrSrc
+      ? `
+      <table cellpadding="0" cellspacing="0" style="margin:8px 0 16px;">
+        <tr>
+          <td align="center">
+            <img src="${qrSrc.replace(/"/g, '&quot;')}" alt="Scan to pay with UPI" width="240" style="display:block;width:240px;max-width:100%;height:auto;border:0;border-radius:8px;background:#ffffff;" />
+            <p style="margin:12px 0 0;font-size:13px;line-height:1.5;color:#cccccc;">Scan this QR code to pay with any UPI app</p>
+          </td>
+        </tr>
+      </table>`
+      : ''
+    const remainingPaymentBlock =
+      Number(remainingBalanceRaw) > 0
+        ? `${p(`If your balance payment is still pending (${remainingBalance}), please keep it ready. As per our payment policy, the remaining amount will be collected before the event begins or complete your payment now.`)}${paymentQrBlock}${ctaBtn('Complete Payment', paymentUrl)}`
+        : p('Your payment is complete — no remaining balance due. Thank you!')
+
+    return layout(
       'Just 2 days to go!',
       `
       ${h1('Your event is almost here! 🎉')}
@@ -816,11 +834,7 @@ export const templates = {
       ${p('✅ All booked services have been confirmed<br/>✅ Our team will reach on the discussed time<br/>✅ Your dedicated planner from team Elewen will coordinate everything with you.')}
       ${divider()}
       ${p('<strong style="color:#fff;">Remaining Payment</strong>')}
-      ${
-        Number(remainingBalanceRaw) > 0
-          ? `${p(`If your balance payment is still pending (${remainingBalance}), please keep it ready. As per our payment policy, the remaining amount will be collected before the event begins or complete your payment now.`)}${ctaBtn('Complete Payment', paymentUrl)}`
-          : p('Your payment is complete — no remaining balance due. Thank you!')
-      }
+      ${remainingPaymentBlock}
       ${divider()}
       ${p('<strong style="color:#fff;">🤝 Our Promise to You</strong>')}
       ${p('Your experience matters to us. While we work closely with our vendors to ensure everything goes smoothly, if you face any concerns during the event, please let us know as soon as possible. Share a few photos of the issue with our support team so we can assess it quickly and work towards the best possible resolution.')}
@@ -833,7 +847,8 @@ export const templates = {
       ${p('See you in 2 days!')}
       ${p(`Team Elewen<br/>${supportPhone || '9810937700'}`)}
     `
-    ),
+    )
+  },
 
   booking_post_event_feedback: ({ couponValue, feedbackUrl, supportPhone }) =>
     layout(
