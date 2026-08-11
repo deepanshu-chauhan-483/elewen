@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-11: Admin booking CUSTOMER name showed dash
+
+**Root cause:** Booking Management header used only `booking.customer.name` from `up_users` / `customer_profiles` first+last. Accounts with email/phone but empty names (common after signup) rendered "—". Checkout contact name lives on notes → `infoCollection.fullName`, which Payment Management already resolved and Booking Management ignored.
+
+**Failure symptoms:** CUSTOMER field "—"; EMAIL and PHONE populated for the same booking.
+
+**Fix details:** Shared `resolveCustomerDisplayName` in `bookingDisplay.js` (checkout fullName → profile names → `customerName` → `customer.name`). Booking Management header and FULL NAME field use it; Payment Management imports the shared helper.
+
+**Consulted sources:** `BookingManagementPage.jsx`, `PaymentManagementPage.jsx`, `api/src/controllers/admin.js` `fetchUsersByIds` / `resolveCustomerDisplayName`
+
+**Prevention guidance:** Never bind admin customer display to a single profile name field; always prefer checkout/info-collection name with profile fallback.
+
 ## 2026-08-11: SE3 Fancy Bar surcharge missing on live cart
 
 **Root cause:** Live Strapi Signature Essentials 3 had `price_surcharge: null` on Fancy Bar (and CMS backdrop titles differed from seed). Cart used stored `unitPrice` without surcharge, so Fancy Bar stayed “Included” at ₹85,000 instead of ₹90,000.

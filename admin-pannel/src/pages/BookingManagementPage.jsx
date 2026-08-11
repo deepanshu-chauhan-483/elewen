@@ -32,6 +32,7 @@ import {
   getBookingAdditionalInfoText,
   getBookingCustomerPhone,
   getBookingPackageNamesText,
+  resolveCustomerDisplayName,
 } from '../lib/bookingDisplay'
 import {
   BOOKING_STATUSES,
@@ -1073,7 +1074,7 @@ function CustomerInformationSection({ booking }) {
   ]
 
   const infoCollectionFields = [
-    { label: 'FULL NAME', value: info.fullName || customer?.name },
+    { label: 'FULL NAME', value: resolveCustomerDisplayName(booking, '') },
     { label: 'EMAIL', value: info.email || customer?.email },
     { label: 'PHONE', value: info.phone || getBookingCustomerPhone(booking) },
     { label: 'EVENT DATE', value: info.eventDate || booking?.eventDate },
@@ -1423,7 +1424,10 @@ function BookingAccordionCard({ booking, open = false, onToggle, onStatusUpdated
           {/* Booking details grid */}
           <div className="grid grid-cols-2 gap-5 md:grid-cols-4 pb-6">
             {[
-              { label: 'CUSTOMER', value: bookingDetails.customer?.name },
+              {
+                label: 'CUSTOMER',
+                value: resolveCustomerDisplayName(bookingDetails, ''),
+              },
               { label: 'EMAIL', value: bookingDetails.customer?.email },
               { label: 'PHONE', value: getBookingCustomerPhone(bookingDetails) },
               {

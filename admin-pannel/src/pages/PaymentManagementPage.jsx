@@ -27,7 +27,11 @@ import {
 } from '../hooks/useAdminData'
 import { useScrollToTop } from '../hooks/useScrollToTop'
 import { getAdminBadgeClass } from '../lib/adminBadges'
-import { getBookingCustomerPhone, getBookingPackageNamesText } from '../lib/bookingDisplay'
+import {
+  getBookingCustomerPhone,
+  getBookingPackageNamesText,
+  resolveCustomerDisplayName,
+} from '../lib/bookingDisplay'
 import { formatCurrency, formatDate, formatDateTime } from '../lib/formatters'
 import { bookingHasHookahCod, isCodPayment } from '../lib/sheeshaCheckout'
 
@@ -273,34 +277,6 @@ function SectionLabel({ children }) {
       {children}
     </p>
   )
-}
-
-function looksLikeEmail(value) {
-  return /@/.test(String(value ?? '').trim())
-}
-
-function resolveCustomerDisplayName(booking) {
-  const fromProfile = [booking?.customer?.first_name, booking?.customer?.last_name]
-    .map(part => String(part ?? '').trim())
-    .filter(Boolean)
-    .join(' ')
-  const candidates = [
-    booking?.infoCollection?.fullName,
-    fromProfile,
-    booking?.customerName,
-    booking?.customer?.name,
-  ]
-
-  for (const candidate of candidates) {
-    const text = String(candidate ?? '').trim()
-    if (!text) continue
-    if (looksLikeEmail(text)) continue
-    if (/^customer$/i.test(text)) continue
-    if (/^user\s+\d+$/i.test(text)) continue
-    return text
-  }
-
-  return 'Customer'
 }
 
 function resolveBookingFinance(booking) {

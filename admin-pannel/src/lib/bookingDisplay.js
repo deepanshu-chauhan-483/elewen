@@ -132,6 +132,35 @@ export function getBookingCustomerPhone(booking = null) {
   return ''
 }
 
+function looksLikeEmail(value) {
+  return /@/.test(String(value ?? '').trim())
+}
+
+/** Display name from checkout notes, profile, or API snapshot — never email placeholders. */
+export function resolveCustomerDisplayName(booking = null, fallback = 'Customer') {
+  const fromProfile = [booking?.customer?.first_name, booking?.customer?.last_name]
+    .map(part => String(part ?? '').trim())
+    .filter(Boolean)
+    .join(' ')
+  const candidates = [
+    booking?.infoCollection?.fullName,
+    fromProfile,
+    booking?.customerName,
+    booking?.customer?.name,
+  ]
+
+  for (const candidate of candidates) {
+    const text = String(candidate ?? '').trim()
+    if (!text) continue
+    if (looksLikeEmail(text)) continue
+    if (/^customer$/i.test(text)) continue
+    if (/^user\s+\d+$/i.test(text)) continue
+    return text
+  }
+
+  return fallback
+}
+
 export function formatInfoStatus(status = '') {
   switch (String(status ?? '').toLowerCase()) {
     case 'waiting':
