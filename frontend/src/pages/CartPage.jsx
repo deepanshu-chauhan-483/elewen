@@ -1275,35 +1275,37 @@ function PriceSummaryCard({
                         {formatCurrency(summary.total)}
                       </span>
                     </div>
-                    {/* Elements list: desktop only — hidden on mobile */}
-                    <hr className="my-4 hidden border-[#0000001A] md:block" />
-                    {item?.itemType === 'addon'
-                      ? summary.rows.map(row => (
-                          <div
-                            key={`${item.id}-${row.label}`}
-                            className="hidden justify-between text-gray-500 md:flex"
-                          >
-                            <span>{row.label}</span>
-                            <span>{formatCurrency(row.total)}</span>
-                          </div>
-                        ))
-                      : getSummaryIncludedItems(item).map(selectedItem => (
-                          <div
-                            key={`${item.id}-${selectedItem.optionLabel}-${selectedItem.label}`}
-                            className="hidden justify-between text-[#767676] md:flex"
-                          >
-                            <span>
-                              {selectedItem.isServiceCharge
-                                ? selectedItem.optionLabel
-                                : selectedItem.label}
-                            </span>
-                            <span className="text-[#1C1C1C]">
-                              {selectedItem.isServiceCharge
-                                ? selectedItem.amountLabel || selectedItem.label
-                                : 'Included'}
-                            </span>
-                          </div>
-                        ))}
+                    {/* Hide Included elements list on mobile only; desktop unchanged */}
+                    <div className="max-md:hidden space-y-2">
+                      <hr className="my-4 border-[#0000001A]" />
+                      {item?.itemType === 'addon'
+                        ? summary.rows.map(row => (
+                            <div
+                              key={`${item.id}-${row.label}`}
+                              className="flex justify-between text-gray-500"
+                            >
+                              <span>{row.label}</span>
+                              <span>{formatCurrency(row.total)}</span>
+                            </div>
+                          ))
+                        : getSummaryIncludedItems(item).map(selectedItem => (
+                            <div
+                              key={`${item.id}-${selectedItem.optionLabel}-${selectedItem.label}`}
+                              className="flex justify-between text-[#767676]"
+                            >
+                              <span>
+                                {selectedItem.isServiceCharge
+                                  ? selectedItem.optionLabel
+                                  : selectedItem.label}
+                              </span>
+                              <span className="text-[#1C1C1C]">
+                                {selectedItem.isServiceCharge
+                                  ? selectedItem.amountLabel || selectedItem.label
+                                  : 'Included'}
+                              </span>
+                            </div>
+                          ))}
+                    </div>
                   </div>
                 ))
               : itemSummaries.map(({ item, summary }) => {
@@ -1394,6 +1396,7 @@ function PriceSummaryCard({
         </div>
       </div>
 
+      {/* Mobile only: coupon below price totals, above checkout CTA */}
       {mobileCouponSlot ? <div className="md:hidden">{mobileCouponSlot}</div> : null}
 
       <div className="rounded-xl border border-[#95796066] p-5">
@@ -1906,7 +1909,7 @@ export default function CartPage() {
               highlightMessage={checkoutPincodePrompt}
             />
 
-            {/* Desktop: coupon stays above package details */}
+            {/* Desktop only: coupon above package details (hidden on mobile) */}
             <div className="hidden md:block">
               <CheckoutCouponSection
                 cart={cart}
