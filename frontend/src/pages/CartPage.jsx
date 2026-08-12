@@ -1214,6 +1214,7 @@ function PriceSummaryCard({
   checkoutDisabledMessage = 'Enter your pincode to enable checkout.',
   cateringDiscountSettings = null,
   deliveryCharge = null,
+  mobileCouponSlot = null,
 }) {
   const { data: globalSettings = null } = useGlobalSettings()
   const itemSummaries = cartItems.map(item => ({
@@ -1274,12 +1275,13 @@ function PriceSummaryCard({
                         {formatCurrency(summary.total)}
                       </span>
                     </div>
-                    <hr className="my-4 border-[#0000001A]" />
+                    {/* Elements list: desktop only — hidden on mobile */}
+                    <hr className="my-4 hidden border-[#0000001A] md:block" />
                     {item?.itemType === 'addon'
                       ? summary.rows.map(row => (
                           <div
                             key={`${item.id}-${row.label}`}
-                            className="flex justify-between text-gray-500"
+                            className="hidden justify-between text-gray-500 md:flex"
                           >
                             <span>{row.label}</span>
                             <span>{formatCurrency(row.total)}</span>
@@ -1288,7 +1290,7 @@ function PriceSummaryCard({
                       : getSummaryIncludedItems(item).map(selectedItem => (
                           <div
                             key={`${item.id}-${selectedItem.optionLabel}-${selectedItem.label}`}
-                            className="flex justify-between text-[#767676]"
+                            className="hidden justify-between text-[#767676] md:flex"
                           >
                             <span>
                               {selectedItem.isServiceCharge
@@ -1391,6 +1393,8 @@ function PriceSummaryCard({
           )}
         </div>
       </div>
+
+      {mobileCouponSlot ? <div className="md:hidden">{mobileCouponSlot}</div> : null}
 
       <div className="rounded-xl border border-[#95796066] p-5">
         <div className="mb-4 rounded-lg bg-[#E6F2E1] py-3 text-center text-sm">
@@ -1902,15 +1906,18 @@ export default function CartPage() {
               highlightMessage={checkoutPincodePrompt}
             />
 
-            <CheckoutCouponSection
-              cart={cart}
-              isLoggedIn={isLoggedIn}
-              isApplyingCoupon={isApplyingCoupon}
-              onApplyCoupon={handleApplyCoupon}
-              onRemoveCoupon={handleRemoveCoupon}
-              onApplyingChange={setIsApplyingCoupon}
-              showToast={showToast}
-            />
+            {/* Desktop: coupon stays above package details */}
+            <div className="hidden md:block">
+              <CheckoutCouponSection
+                cart={cart}
+                isLoggedIn={isLoggedIn}
+                isApplyingCoupon={isApplyingCoupon}
+                onApplyCoupon={handleApplyCoupon}
+                onRemoveCoupon={handleRemoveCoupon}
+                onApplyingChange={setIsApplyingCoupon}
+                showToast={showToast}
+              />
+            </div>
 
             {hasSingleItem ? (
               <SinglePackageCard
@@ -1961,6 +1968,17 @@ export default function CartPage() {
               checkoutDisabledMessage={checkoutDisabledMessage}
               cateringDiscountSettings={cateringDiscountSettings}
               deliveryCharge={activeDeliveryCharge}
+              mobileCouponSlot={
+                <CheckoutCouponSection
+                  cart={cart}
+                  isLoggedIn={isLoggedIn}
+                  isApplyingCoupon={isApplyingCoupon}
+                  onApplyCoupon={handleApplyCoupon}
+                  onRemoveCoupon={handleRemoveCoupon}
+                  onApplyingChange={setIsApplyingCoupon}
+                  showToast={showToast}
+                />
+              }
             />
             <TrustBadges />
           </div>
