@@ -365,24 +365,6 @@ export default function BookingConfirmation() {
       <div className="min-h-screen bg-[#FAF9F7] px-4 py-10 md:px-8 md:pt-24 lg:px-16">
         <div className="flex flex-col gap-[clamp(24px,6vw,80px)] md:flex-row">
           <div className="flex-1 space-y-6">
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-[#B7B59F] text-xl text-white">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M20 6L9 17L4 12"
-                  stroke="#FAFAFA"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-
             <h1 className="mb-2 text-[16px] font-semibold text-[#2C2C2C] md:text-[27px]">
               It&apos;s Official! Your Celebration Just Got an Upgrade.
             </h1>
@@ -450,24 +432,6 @@ export default function BookingConfirmation() {
     <div className="min-h-screen bg-[#FAF9F7] px-4 py-10 md:px-8 md:pt-24 lg:px-16">
       <div className="flex flex-col gap-[clamp(24px,6vw,150px)] md:flex-row">
         <div className="flex-1 space-y-6">
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-[#B7B59F] text-xl text-white">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M20 6L9 17L4 12"
-                stroke="#FAFAFA"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-
           <h1 className="mb-2 text-[16px] font-semibold text-[#2C2C2C] md:text-[27px]">
             {pageContent.heading}
           </h1>
