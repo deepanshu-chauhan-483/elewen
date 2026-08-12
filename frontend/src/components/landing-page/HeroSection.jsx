@@ -932,12 +932,12 @@ const HeroSection = () => {
                         })
                       }
                     }}
-                    className={`hero-mobile-event-card relative flex min-h-[4.5rem] min-w-0 flex-1 cursor-pointer flex-col justify-center gap-1 px-2.5 py-3 transition-colors duration-300 hover:bg-[#591902]/40 ${
+                    className={`hero-mobile-event-card relative flex min-h-[4.5rem] min-w-0 flex-1 cursor-pointer flex-col items-center justify-center gap-1 px-2.5 py-3 text-center transition-colors duration-300 hover:bg-[#591902]/40 ${
                       i < rightCards.length - 1 ? 'border-r border-white/20' : ''
                     }`}
                   >
                     <h3
-                      className="m-0 text-[clamp(0.625rem,3.2vw,0.75rem)] font-normal uppercase leading-[1.2] tracking-[0.08em] text-[#FAFAFA]"
+                      className="m-0 w-full text-center text-[clamp(0.625rem,3.2vw,0.75rem)] font-normal uppercase leading-[1.2] tracking-[0.08em] text-[#FAFAFA]"
                       style={{ fontFamily: "'Malgin', serif" }}
                     >
                       {resolvedLabel}
