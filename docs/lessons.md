@@ -347,3 +347,15 @@
 **Consulted sources:** `SingleProductPageContent.jsx`, `PackageCard.jsx`, `index.css` gallery touch classes
 
 **Prevention guidance:** Mobile package galleries need a swipe target on the large image (plus dots), not thumb-strip-only. Card swipe handlers must suppress the follow-up click that opens the package.
+
+## 2026-08-13: Cart / checkout text too large on mobile
+
+**Root cause:** Checkout used desktop-scale headings (`text-4xl`, `text-[20px]`, `text-lg`) with no mobile downsize; cart body utilities were still large on phones.
+
+**Failure symptoms:** Customer Form, Special Request, Basic/Event Details, and cart review copy looked oversized on mobile.
+
+**Fix details:** Scoped `elewen-cart-page` / `elewen-checkout-page` wrappers; mobile-only CSS shrinks titles and body utilities to ~12–18px; inputs stay 16px to avoid iOS zoom.
+
+**Consulted sources:** `CartPage.jsx`, `CheckoutPage.jsx`, `index.css`
+
+**Prevention guidance:** Cart and checkout mobile type should be scoped CSS (or `md:` upsizing), never desktop-only heading sizes on the phone viewport.

@@ -1651,7 +1651,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white px-3 pb-8 pt-20 md:px-8 md:pb-10 md:pt-24 lg:px-16">
+    <div className="elewen-cart-page min-h-screen bg-white px-3 pb-8 pt-20 md:px-8 md:pb-10 md:pt-24 lg:px-16">
       <div className="mb-4 md:mb-6">
         <h2 className="text-[20px] text-[#1C1C1C] md:text-[36px]">Review Your Event</h2>
         <p className="text-sm text-gray-500 md:text-base">

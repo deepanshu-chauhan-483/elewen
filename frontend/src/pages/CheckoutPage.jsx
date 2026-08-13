@@ -1371,7 +1371,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF] px-5 py-10 pt-24 md:px-8 lg:px-16">
+    <div className="elewen-checkout-page min-h-screen bg-[#FFFFFF] px-5 py-10 pt-24 md:px-8 lg:px-16">
       <div className="mb-10">
         <h2 className="text-4xl text-[#2C2C2C]">{pageContent.heading}</h2>
         <p className="mt-2 text-gray-500">{pageContent.intro}</p>
