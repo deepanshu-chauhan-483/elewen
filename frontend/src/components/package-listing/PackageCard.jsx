@@ -77,6 +77,7 @@ export default function PackageCard({ pkg, className = '', compactMode = false, 
 
   const startX = useRef(0)
   const endX = useRef(0)
+  const didSwipe = useRef(false)
 
   const currentImage = images[currentIndex]
   const saved =
@@ -198,7 +199,10 @@ export default function PackageCard({ pkg, className = '', compactMode = false, 
 
   const handleTouchStart = e => {
     e.stopPropagation()
-    startX.current = e.touches[0].clientX
+    const x = e.touches[0].clientX
+    startX.current = x
+    endX.current = x
+    didSwipe.current = false
   }
 
   const handleTouchMove = e => {
@@ -208,11 +212,15 @@ export default function PackageCard({ pkg, className = '', compactMode = false, 
 
   const handleTouchEnd = e => {
     e.stopPropagation()
+    if (images.length <= 1) return
+
     const diff = startX.current - endX.current
 
     if (diff > 50) {
+      didSwipe.current = true
       goToNext()
     } else if (diff < -50) {
+      didSwipe.current = true
       goToPrevious()
     }
   }
@@ -227,6 +235,10 @@ export default function PackageCard({ pkg, className = '', compactMode = false, 
       role="link"
       tabIndex={0}
       onClick={() => {
+        if (didSwipe.current) {
+          didSwipe.current = false
+          return
+        }
         if (packageHref) window.open(packageHref, '_blank', 'noopener')
       }}
       onKeyDown={event => {
@@ -238,7 +250,8 @@ export default function PackageCard({ pkg, className = '', compactMode = false, 
       className={`relative flex h-full cursor-pointer flex-col rounded-[8px] bg-white p-2 shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition-transform hover:-translate-y-1 ${className}`}
     >
       <div
-        className="relative h-[280px] overflow-hidden rounded-[6px] bg-[#E8E2DA]"
+        className="package-card-image-slider relative h-[280px] overflow-hidden rounded-[6px] bg-[#E8E2DA]"
+        data-lenis-prevent
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

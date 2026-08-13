@@ -447,6 +447,49 @@ html.home-scroll-restoring::before {
   .mobile-carousel-scroll {
     touch-action: pan-x;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  /* Homepage package row: parent overflow-x-hidden blocks child pan on iOS */
+  .package-carousel-viewport {
+    overflow-x: visible;
+  }
+
+  /* Listing card photo swipe — keep page scroll from stealing the gesture */
+  .package-card-image-slider {
+    touch-action: pan-x;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .package-card-image-slider img {
+    -webkit-user-drag: none;
+    pointer-events: none;
+  }
+
+  /* Detail page main image: horizontal swipe on mobile */
+  .package-gallery-main {
+    touch-action: pan-y pinch-zoom;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  @media (max-width: 767px) {
+    .package-gallery-main {
+      touch-action: pan-x pan-y;
+    }
+  }
+
+  .package-gallery-main img {
+    -webkit-user-drag: none;
+    pointer-events: none;
+  }
+
+  /* Detail page thumbnail strip */
+  .package-gallery-thumbs {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
   }
 
   .hero-band-row {

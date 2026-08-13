@@ -335,3 +335,15 @@
 **Consulted sources:** `admin-pannel/src/pages/BookingManagementPage.jsx`, `admin-pannel/src/hooks/useAdminData.js`, `api/src/controllers/admin.js` (`buildBookingBucketFilter` / `bookingMatchesOperationalBucket`).
 
 **Prevention guidance:** Deep-link "open this booking" helpers must respect the active filter/bucket. Never use `keepPreviousData` across filter keys. After mutations that move rows between lists, clear open/pin state and reset list caches.
+
+## 2026-08-13: Package images not swipeable on mobile
+
+**Root cause:** Package detail pages only changed photos by scrolling the narrow side thumbnail strip. On iOS that nested scroll often lost the gesture to page/Lenis scroll, so the large main image felt stuck. Listing cards did detect swipe, but the synthesized click after touchend opened the package and made the carousel look broken.
+
+**Failure symptoms:** Desktop gallery/arrows worked; mobile package images (detail + listing cards with dots) did not advance when swiping.
+
+**Fix details:** Detail main image supports left/right swipe and shows mobile dots; thumb strip stays in sync. Listing `PackageCard` ignores the post-swipe click so the card stays put while dots advance.
+
+**Consulted sources:** `SingleProductPageContent.jsx`, `PackageCard.jsx`, `index.css` gallery touch classes
+
+**Prevention guidance:** Mobile package galleries need a swipe target on the large image (plus dots), not thumb-strip-only. Card swipe handlers must suppress the follow-up click that opens the package.

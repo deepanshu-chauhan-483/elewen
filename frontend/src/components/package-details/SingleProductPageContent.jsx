@@ -21,6 +21,27 @@ const SIDE_IMAGES_SCROLL_CLASS =
 const SIDE_THUMB_BUTTON_CLASS =
   'shrink-0 overflow-hidden rounded-[12px] transition-opacity h-[clamp(3.75rem,11vw,4.5rem)] w-full md:h-[clamp(5.125rem,6.5vw,6.4375rem)] md:w-[clamp(4rem,5vw,5rem)]'
 
+const GALLERY_SWIPE_THRESHOLD_PX = 40
+
+function GalleryImageDots({ count, currentIndex = 0 }) {
+  if (count <= 1) return null
+
+  return (
+    <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 md:hidden">
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className={`transition-all duration-300 ${
+            i === currentIndex
+              ? 'h-[6px] w-[22px] rounded-full bg-white'
+              : 'h-[6px] w-[6px] rounded-full bg-white/60'
+          }`}
+        />
+      ))}
+    </div>
+  )
+}
+
 function PackageImageLightbox({ open, image, title, onClose }) {
   useEffect(() => {
     if (!open) return undefined
@@ -531,6 +552,12 @@ function ProductImageLayout({
   const [isCartOptionsOpen, setIsCartOptionsOpen] = useState(false)
   const [isLightboxOpen, setIsLightboxOpen] = useState(false)
   const sideStripRef = useRef(null)
+  const galleryTouchStartX = useRef(0)
+  const galleryTouchStartY = useRef(0)
+  const galleryTouchEndX = useRef(0)
+  const galleryTouchEndY = useRef(0)
+  const galleryDidSwipe = useRef(false)
+  const ignoreThumbScrollSync = useRef(false)
 
   const thumbImages = useMemo(() => {
     const seen = new Set()
@@ -566,7 +593,31 @@ function ProductImageLayout({
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
 
+  const scrollThumbIntoView = useCallback(imageUrl => {
+    const root = sideStripRef.current
+    if (!root || !imageUrl) return
+    const thumb = Array.from(root.querySelectorAll('[data-gallery-thumb]')).find(
+      el => el.getAttribute('data-gallery-thumb') === imageUrl
+    )
+    if (!thumb) return
+    ignoreThumbScrollSync.current = true
+    thumb.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    window.setTimeout(() => {
+      ignoreThumbScrollSync.current = false
+    }, 320)
+  }, [])
+
+  const selectGalleryImage = useCallback(
+    imageUrl => {
+      if (!imageUrl) return
+      setSelectedOverride(imageUrl)
+      scrollThumbIntoView(imageUrl)
+    },
+    [scrollThumbIntoView]
+  )
+
   const syncMainImageFromThumbScroll = useCallback(() => {
+    if (ignoreThumbScrollSync.current) return
     const root = sideStripRef.current
     if (!root || thumbImages.length === 0) return
 
@@ -601,7 +652,53 @@ function ProductImageLayout({
     selectedOverride && galleryUrls.includes(selectedOverride)
       ? selectedOverride
       : initialDisplayImage
+  const activeImageIndex = Math.max(0, galleryUrls.indexOf(activeImage))
   const activeImageMeta = activeImage ? imageMetaByUrl?.[activeImage] : null
+
+  const handleGalleryTouchStart = event => {
+    if (galleryUrls.length <= 1) return
+    const touch = event.touches[0]
+    galleryTouchStartX.current = touch.clientX
+    galleryTouchStartY.current = touch.clientY
+    galleryTouchEndX.current = touch.clientX
+    galleryTouchEndY.current = touch.clientY
+    galleryDidSwipe.current = false
+  }
+
+  const handleGalleryTouchMove = event => {
+    if (galleryUrls.length <= 1) return
+    const touch = event.touches[0]
+    galleryTouchEndX.current = touch.clientX
+    galleryTouchEndY.current = touch.clientY
+  }
+
+  const handleGalleryTouchEnd = () => {
+    if (galleryUrls.length <= 1) return
+
+    const deltaX = galleryTouchStartX.current - galleryTouchEndX.current
+    const deltaY = Math.abs(galleryTouchStartY.current - galleryTouchEndY.current)
+    const horizontal = Math.abs(deltaX)
+    // Prefer horizontal swipes; ignore mostly-vertical page scrolls.
+    if (horizontal < GALLERY_SWIPE_THRESHOLD_PX) return
+    if (horizontal < deltaY * 1.2) return
+
+    galleryDidSwipe.current = true
+    if (deltaX > 0) {
+      const nextIndex = (activeImageIndex + 1) % galleryUrls.length
+      selectGalleryImage(galleryUrls[nextIndex])
+      return
+    }
+    const prevIndex = (activeImageIndex - 1 + galleryUrls.length) % galleryUrls.length
+    selectGalleryImage(galleryUrls[prevIndex])
+  }
+
+  const handleMainImageClick = () => {
+    if (galleryDidSwipe.current) {
+      galleryDidSwipe.current = false
+      return
+    }
+    if (activeImage) setIsLightboxOpen(true)
+  }
 
   useEffect(() => {
     setIsLightboxOpen(false)
@@ -640,14 +737,18 @@ function ProductImageLayout({
             style={{ top: desktopSectionTop }}
           >
             <div className="flex w-full flex-row items-start gap-2 pt-8 md:gap-4 md:pt-0">
-              {/* Main Image */}
+              {/* Main Image — swipe left/right on mobile (dots + listing-card parity) */}
               <div
                 className="order-2 min-w-0 flex-1 mx-auto md:order-2 md:max-w-[clamp(17.5rem,38vw,37.5rem)]"
               >
                 <button
                   type="button"
-                  onClick={() => activeImage && setIsLightboxOpen(true)}
-                  className={`relative block w-full cursor-zoom-in overflow-hidden ${GALLERY_VIEWPORT_HEIGHT_CLASS}`}
+                  onClick={handleMainImageClick}
+                  onTouchStart={handleGalleryTouchStart}
+                  onTouchMove={handleGalleryTouchMove}
+                  onTouchEnd={handleGalleryTouchEnd}
+                  className={`package-gallery-main relative block w-full cursor-zoom-in overflow-hidden ${GALLERY_VIEWPORT_HEIGHT_CLASS}`}
+                  data-lenis-prevent
                   aria-label={`View full size image for ${title}`}
                 >
                   <BrandedImage
@@ -658,8 +759,10 @@ function ProductImageLayout({
                     imgClassName="object-cover object-center"
                   />
 
+                  <GalleryImageDots count={galleryUrls.length} currentIndex={activeImageIndex} />
+
                   {activeImageMeta?.heading || activeImageMeta?.text ? (
-                    <div className="pointer-events-none absolute bottom-3 right-3 z-10 max-w-[70%] rounded-full bg-[#591902] px-3.5 py-1.5 text-white shadow-sm">
+                    <div className="pointer-events-none absolute bottom-10 right-3 z-10 max-w-[70%] rounded-full bg-[#591902] px-3.5 py-1.5 text-white shadow-sm md:bottom-3">
                       <p className="truncate text-[11px] font-semibold leading-none tracking-wide">
                         {activeImageMeta?.heading || activeImageMeta?.text}
                       </p>
@@ -673,7 +776,7 @@ function ProductImageLayout({
               {thumbImages.length > 0 ? (
                 <div
                   ref={sideStripRef}
-                  className={`order-1 flex w-[4.25rem] min-w-[4.25rem] shrink-0 snap-y snap-mandatory flex-col items-stretch gap-2 overflow-y-auto overscroll-contain pb-0 pt-0 md:order-1 md:w-[clamp(4rem,5vw,5rem)] md:min-w-[clamp(4rem,5vw,5rem)] md:gap-2 md:pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${SIDE_IMAGES_SCROLL_CLASS}`}
+                  className={`package-gallery-thumbs order-1 flex w-[4.25rem] min-w-[4.25rem] shrink-0 snap-y snap-mandatory flex-col items-stretch gap-2 overflow-y-scroll overscroll-contain pb-0 pt-0 md:order-1 md:w-[clamp(4rem,5vw,5rem)] md:min-w-[clamp(4rem,5vw,5rem)] md:gap-2 md:pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${SIDE_IMAGES_SCROLL_CLASS}`}
                   data-lenis-prevent
                   aria-label={`${title} image gallery`}
                 >
@@ -682,10 +785,7 @@ function ProductImageLayout({
                       type="button"
                       key={`${image}-${index}`}
                       data-gallery-thumb={image}
-                      onClick={event => {
-                        setSelectedOverride(image)
-                        event.currentTarget.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-                      }}
+                      onClick={() => selectGalleryImage(image)}
                       className={`${SIDE_THUMB_BUTTON_CLASS} snap-start ${
                         activeImage === image ? 'opacity-100' : 'opacity-40'
                       }`}
