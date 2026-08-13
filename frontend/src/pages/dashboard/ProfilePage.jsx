@@ -95,7 +95,7 @@ export default function ProfilePage() {
         const status = String(booking?.status ?? '')
           .trim()
           .toLowerCase()
-        return ['completed', 'cancelled', 'canceled'].includes(status)
+        return status === 'completed'
       }),
     [previousBookings]
   )

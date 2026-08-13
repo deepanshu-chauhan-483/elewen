@@ -271,25 +271,27 @@ function PreviousBookingCard({ booking, session }) {
               </button>
             ) : null}
 
-            <button
-              type="button"
-              onClick={event => {
-                event.stopPropagation()
-                setShowRefer(prev => !prev)
-              }}
-              className={`inline-flex rounded-full border px-4 py-2 text-sm transition ${
-                showRefer
-                  ? 'border-[#C6A15B] bg-[#FBF7F3] text-[#CDB17E]'
-                  : 'border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E]'
-              }`}
-            >
-              Claim your coupon
-            </button>
+            {!isCancelled ? (
+              <button
+                type="button"
+                onClick={event => {
+                  event.stopPropagation()
+                  setShowRefer(prev => !prev)
+                }}
+                className={`inline-flex rounded-full border px-4 py-2 text-sm transition ${
+                  showRefer
+                    ? 'border-[#C6A15B] bg-[#FBF7F3] text-[#CDB17E]'
+                    : 'border border-[#CDB17E] bg-[#FFFFFF] hover:bg-[#FAF6F1] text-[#CDB17E]'
+                }`}
+              >
+                Claim your coupon
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
 
-      {showRefer ? <ClaimCouponPanel onClose={() => setShowRefer(false)} /> : null}
+      {showRefer && !isCancelled ? <ClaimCouponPanel onClose={() => setShowRefer(false)} /> : null}
 
       {open ? (
         <>
