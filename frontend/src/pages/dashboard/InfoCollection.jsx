@@ -285,10 +285,6 @@ export default function InfoCollection() {
           >
             Information Collection
           </h1>
-          <p className="mt-2 text-[14px] text-[#7A7A7A]">
-            Details from checkout are filled in when available and cannot be changed here. Add
-            anything that is still missing — nothing is mandatory.
-          </p>
           {statusLabel ? (
             <p className="mt-2 text-[12px] text-[#957960]">Booking status: {statusLabel}</p>
           ) : null}
