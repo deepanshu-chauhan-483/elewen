@@ -128,7 +128,7 @@ const HelpIcon = memo(function HelpIcon({ isActive }) {
   )
 })
 
-const SIDEBAR_ITEMS = [
+export const SIDEBAR_ITEMS = [
   { to: '/user-dashboard/active-booking', label: 'Active Booking', Icon: DashboardIcon },
   { to: '/user-dashboard/timeline', label: 'Booking Timeline', Icon: TimelineIcon },
   { to: '/user-dashboard/details', label: 'Booking Details', Icon: DetailsIcon },

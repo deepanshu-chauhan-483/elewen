@@ -13,6 +13,7 @@ import {
   useDashboardBookings,
 } from '../../hooks/useDashboardData'
 import { getInitials } from '../../components/dashboard/dashboardUtils'
+import MobileDashboardMenuSection from '../../components/dashboard/MobileDashboardMenuSection'
 import { isValidIndianPhone, normalizeIndianPhone } from '../../lib/phone'
 
 function formatCouponDiscount(coupon) {
@@ -399,6 +400,8 @@ export default function ProfilePage() {
         )}
         </SectionCard>
       </div>
+
+      <MobileDashboardMenuSection />
     </div>
   )
 }
