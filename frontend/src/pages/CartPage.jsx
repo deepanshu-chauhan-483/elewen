@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import DateTimePicker from '../components/common/DateTimePicker'
 import { useToast } from '../components/common/useToast'
 import { useGlobalSettings } from '../hooks/useCmsPages'
 import { useCart } from '../hooks/useCart'
@@ -14,7 +13,6 @@ import CmsPageLoader from '../components/common/CmsPageLoader'
 import BrandedImage from '../components/common/BrandedImage'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { getPackageLineLabel, getSelectedOptionsText } from '../lib/bookingDisplay'
-import { getDateInputMin } from '../lib/dateInput'
 import { useServiceAreas } from '../hooks/useServiceAreas'
 import { getDeliveryChargeForPincode, useDeliveryCharges } from '../hooks/useDeliveryCharges'
 import PriceSummaryDiscountRows from '../components/cart/PriceSummaryDiscountRows'
@@ -189,20 +187,6 @@ function EmptyCart() {
       </Link>
     </div>
   )
-}
-
-function formatDisplayDate(value) {
-  if (!value) return 'Select date'
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Select date'
-
-  return date.toLocaleDateString('en-IN', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
 }
 
 const SAMPLE_TASTE_SERVICE_SLUGS = new Set(['catering', 'bartending'])
@@ -564,21 +548,7 @@ function EditIcon() {
   )
 }
 
-function SinglePackageCard({
-  item,
-  pendingItemId,
-  onRemoveItem,
-  onUpdateQuantity,
-  detailsForm,
-  onEditDate,
-  onEditCity,
-  editingField,
-  onDetailsChange,
-  onSaveDetails,
-  onCancelEdit,
-  isSavingDetails,
-  detailsError,
-}) {
+function SinglePackageCard({ item, pendingItemId, onRemoveItem, onUpdateQuantity }) {
   const isPending = pendingItemId === item.id
   const packageHref = getCartPackageHref(item.packageData, item.selectedOptions, item.id)
   const packageImage = item.packageData?.images?.[0] ?? ''
@@ -586,8 +556,6 @@ function SinglePackageCard({
   const packageQuantity = getCartItemQuantity(item)
   const selectedElements = getSelectedElements(item)
   const packageSubtitle = getPackageSubtitle(item.packageData)
-  const eventLocation = detailsForm.eventCity?.trim() || 'Add city / area'
-  const eventDate = detailsForm.eventDate ? formatDisplayDate(detailsForm.eventDate) : 'Select date'
   const additionalInfo = String(item?.additionalInfo ?? '').trim()
 
   return (
@@ -621,9 +589,6 @@ function SinglePackageCard({
               onIncrement={() => onUpdateQuantity(item.id, packageQuantity + 1)}
             />
           </div>
-          <p className="text-[10px] md:text-[12px] text-[#6A6864]">
-            {eventLocation} · {eventDate}
-          </p>
         </div>
       </div>
 
@@ -709,123 +674,6 @@ function SinglePackageCard({
           </div>
         </div>
       ) : null}
-
-      <div className="overflow-hidden rounded-xl border border-[#95796066]">
-        <div className="bg-[#F8F4ED] px-4 py-3">
-          <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
-            Event Details
-          </h3>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2">
-          <div className="flex justify-between rounded-lg bg-[#F5F5F5] p-4">
-            {editingField === 'city' ? (
-              <div className="w-full space-y-3">
-                <div>
-                  <p className="text-sm text-gray-500">City / Area</p>
-                  <input
-                    type="text"
-                    value={detailsForm.eventCity}
-                    onChange={event => onDetailsChange('eventCity', event.target.value)}
-                    placeholder="Enter city / area"
-                    className="mt-2 w-full border-b border-[#2D2D2D] bg-transparent pb-2 text-[15px] text-[#2C2C2C] outline-none"
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={onCancelEdit}
-                    className="rounded-full border border-[#95796066] px-4 py-2 text-xs font-medium text-[#2C2C2C]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onSaveDetails('city')}
-                    disabled={isSavingDetails || !detailsForm.eventCity.trim()}
-                    className="rounded-full bg-[#2E3A1F] px-4 py-2 text-xs font-medium text-white disabled:opacity-60"
-                  >
-                    {isSavingDetails ? 'Saving...' : 'Save'}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div>
-                  <p className="text-sm text-gray-500">City / Area</p>
-                  <p className="font-medium">{eventLocation}</p>
-                </div>
-                <button type="button" onClick={onEditCity} className="text-sm text-[#957960]">
-                  Edit
-                </button>
-              </>
-            )}
-          </div>
-
-          <div className="flex justify-between rounded-lg bg-[#F3F3F3] p-4">
-            {editingField === 'date' ? (
-              <div className="w-full space-y-3">
-                <div>
-                  <p className="text-sm text-gray-500">Event Date</p>
-                  <DateTimePicker
-                    type="date"
-                    min={getDateInputMin({ offsetDays: 3 })}
-                    value={detailsForm.eventDate}
-                    onChange={event => onDetailsChange('eventDate', event.target.value)}
-                    className="mt-2 w-full border-b border-[#2D2D2D] bg-transparent pb-2 text-[15px] text-[#2C2C2C] outline-none"
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={onCancelEdit}
-                    className="rounded-full border border-[#95796066] px-4 py-2 text-xs font-medium text-[#2C2C2C]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onSaveDetails('date')}
-                    disabled={isSavingDetails || !detailsForm.eventDate}
-                    className="rounded-full bg-[#2E3A1F] px-4 py-2 text-xs font-medium text-white disabled:opacity-60"
-                  >
-                    {isSavingDetails ? 'Saving...' : 'Save'}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div>
-                  <p className="text-sm text-gray-500">Event Date</p>
-                  <p className="font-medium">{eventDate}</p>
-                </div>
-                <button type="button" onClick={onEditDate} className="text-sm text-[#957960]">
-                  Edit
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {detailsError ? <p className="px-4 pb-4 text-sm text-[#8F2D1F]">{detailsError}</p> : null}
-      </div>
-
-      <div className="mt-4 overflow-hidden rounded-xl border border-[#95796066]">
-        <div className="bg-[#F8F4ED] px-4 py-3">
-          <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
-            Delivery Address
-          </h3>
-        </div>
-        <div className="p-4">
-          <textarea
-            value={detailsForm.deliveryAddress ?? ''}
-            onChange={event => onDetailsChange('deliveryAddress', event.target.value)}
-            placeholder="Enter full delivery address for setup"
-            rows={3}
-            className="w-full rounded-lg border border-[#95796066] bg-[#F5F5F5] p-3 text-[14px] text-[#2C2C2C] outline-none focus:border-[#CDB17E] focus:ring-1 focus:ring-[#CDB17E]"
-          />
-        </div>
-      </div>
     </div>
   )
 }
@@ -1531,7 +1379,6 @@ export default function CartPage() {
     updateItemQuantity,
     applyCoupon,
     clearCoupon,
-    updateCartDetails,
     addPackage,
   } = useCart()
 
@@ -1552,15 +1399,6 @@ export default function CartPage() {
   const pincodeSectionRef = useRef(null)
   const pincodeInputRef = useRef(null)
   const [pendingItemId, setPendingItemId] = useState('')
-  const [editingField, setEditingField] = useState('')
-  const [isSavingDetails, setIsSavingDetails] = useState(false)
-  const [detailsError, setDetailsError] = useState('')
-  const [detailsForm, setDetailsForm] = useState({
-    eventDate: '',
-    eventCity: '',
-    guestCount: '',
-    deliveryAddress: '',
-  })
   const [addingAddonId, setAddingAddonId] = useState('')
 
   const items = useMemo(() => cart?.items ?? [], [cart?.items])
@@ -1672,14 +1510,6 @@ export default function CartPage() {
   )
 
   useEffect(() => {
-    setDetailsForm({
-      eventDate: cart?.eventDate ? String(cart.eventDate).slice(0, 10) : '',
-      eventCity: cart?.eventCity ?? '',
-      guestCount: cart?.guestCount != null ? String(cart.guestCount) : '',
-    })
-  }, [cart?.eventDate, cart?.eventCity, cart?.guestCount])
-
-  useEffect(() => {
     const normalized = normalizePincode(pincode)
     try {
       if (isPincodeValid && normalized.length === 6) {
@@ -1707,59 +1537,6 @@ export default function CartPage() {
 
     setPincodeMessage(message)
   }, [pincode, isLoadingServiceAreas, serviceAreas, deliveryCharges])
-
-  const handleDetailChange = (field, value) => {
-    setDetailsError('')
-    setDetailsForm(prev => ({ ...prev, [field]: value }))
-  }
-
-  const handleEditField = field => {
-    setDetailsError('')
-    setEditingField(field)
-  }
-
-  const handleCancelEdit = () => {
-    setDetailsError('')
-    setEditingField('')
-    setDetailsForm({
-      eventDate: cart?.eventDate ? String(cart.eventDate).slice(0, 10) : '',
-      eventCity: cart?.eventCity ?? '',
-      guestCount: cart?.guestCount != null ? String(cart.guestCount) : '',
-    })
-  }
-
-  const handleSaveDetails = async field => {
-    if (isSavingDetails) return
-
-    const nextCity = detailsForm.eventCity.trim()
-    const nextDate = detailsForm.eventDate
-
-    if (field === 'city' && !nextCity) {
-      setDetailsError('Please enter city / area.')
-      return
-    }
-
-    if (field === 'date' && !nextDate) {
-      setDetailsError('Please select an event date.')
-      return
-    }
-
-    setIsSavingDetails(true)
-    setDetailsError('')
-
-    try {
-      await updateCartDetails({
-        eventCity: nextCity,
-        eventDate: nextDate,
-        guestCount: detailsForm.guestCount ? Number(detailsForm.guestCount) : undefined,
-      })
-      setEditingField('')
-    } catch (err) {
-      setDetailsError(parseApiError(err))
-    } finally {
-      setIsSavingDetails(false)
-    }
-  }
 
   const handleRemoveItem = async itemId => {
     if (pendingItemId) return
@@ -1917,15 +1694,6 @@ export default function CartPage() {
                 pendingItemId={pendingItemId}
                 onRemoveItem={handleRemoveItem}
                 onUpdateQuantity={handleUpdateQuantity}
-                detailsForm={detailsForm}
-                onEditDate={() => handleEditField('date')}
-                onEditCity={() => handleEditField('city')}
-                editingField={editingField}
-                onDetailsChange={handleDetailChange}
-                onSaveDetails={handleSaveDetails}
-                onCancelEdit={handleCancelEdit}
-                isSavingDetails={isSavingDetails}
-                detailsError={detailsError}
               />
             ) : (
               <MultiPackageList
