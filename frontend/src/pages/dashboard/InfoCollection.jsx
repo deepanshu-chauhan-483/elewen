@@ -528,11 +528,11 @@ export default function InfoCollection() {
             Back
           </button>
         </div>
-        <p className="mt-3 text-sm text-[#7A7A7A]">
+        {/* <p className="mt-3 text-sm text-[#7A7A7A]">
           Checkout details are filled when available and locked. Add only what is still missing —
           nothing is required. Email, phone, PIN, and event-day contact details are checked only if
           you enter them.
-        </p>
+        </p> */}
       </form>
     </div>
   )
