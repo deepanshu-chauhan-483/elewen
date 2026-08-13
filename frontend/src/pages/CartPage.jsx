@@ -1127,7 +1127,7 @@ function PriceSummaryCard({
                       </span>
                     </div>
                     {/* Hide Included elements list on mobile only; desktop unchanged */}
-                    <div className="max-md:hidden space-y-2">
+                    <div className="price-summary-elements hidden space-y-2 md:block">
                       <hr className="my-4 border-[#0000001A]" />
                       {item?.itemType === 'addon'
                         ? summary.rows.map(row => (
@@ -1172,16 +1172,20 @@ function PriceSummaryCard({
                     addonPricing?.guestCount > 0
                       ? ` · ${addonPricing.guestCount} guests × ₹${Number(addonPricing.perPerson).toLocaleString('en-IN')}/person`
                       : ''
-                  const label =
+                  const labelBase =
                     item?.itemType === 'addon'
-                      ? `Add-on - ${packageName}${addonGuestLabel}${quantityLabel}`
-                      : `${getPackageLineLabel(item?.title, packageName)}${
-                          optionsText ? ` (${optionsText})` : ''
-                        }${quantityLabel}`
+                      ? `Add-on - ${packageName}${addonGuestLabel}`
+                      : getPackageLineLabel(item?.title, packageName)
 
                   return (
                     <div key={item.id} className="flex items-start justify-between gap-4 text-sm">
-                      <span className="min-w-0 flex-1 text-[#767676]">{label}</span>
+                      <span className="min-w-0 flex-1 text-[#767676]">
+                        {labelBase}
+                        {item?.itemType !== 'addon' && optionsText ? (
+                          <span className="price-summary-elements hidden md:inline">{` (${optionsText})`}</span>
+                        ) : null}
+                        {quantityLabel}
+                      </span>
                       <span className="shrink-0 font-medium text-[#1C1C1C]">
                         {formatCurrency(summary.total)}
                       </span>

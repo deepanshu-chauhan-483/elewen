@@ -1884,6 +1884,12 @@ html.home-scroll-restoring::before {
     font-size: 1rem !important;
     line-height: 1.4 !important;
   }
+
+  /* Price Summary: hide package elements / bracket options on mobile only */
+  .elewen-cart-page .price-summary-elements,
+  .elewen-checkout-page .price-summary-elements {
+    display: none !important;
+  }
 }
 
 /* Reusable class to hide scrollbar but keep scroll working */

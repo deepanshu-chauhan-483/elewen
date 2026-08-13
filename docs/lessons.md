@@ -359,3 +359,15 @@
 **Consulted sources:** `CartPage.jsx`, `CheckoutPage.jsx`, `index.css`
 
 **Prevention guidance:** Cart and checkout mobile type should be scoped CSS (or `md:` upsizing), never desktop-only heading sizes on the phone viewport.
+
+## 2026-08-13: Price Summary showed package elements on mobile
+
+**Root cause:** Cart multi-item rows appended selected options in brackets; single-item rows listed Included elements. Checkout put the same options in item `meta`. Desktop needed that detail; phones did not.
+
+**Failure symptoms:** Mobile Price Summary showed long Included lists and titles like `Package (easel, board, …)` for decor/catering/all packages.
+
+**Fix details:** Marked elements/options with `price-summary-elements` + `hidden md:block|inline`; mobile CSS forces those nodes hidden on cart and checkout. Desktop unchanged.
+
+**Consulted sources:** `CartPage.jsx` PriceSummaryCard, `CheckoutPage.jsx` CheckoutItemRow, `index.css`
+
+**Prevention guidance:** Price Summary element detail is desktop-only; never inline options into the mobile package title string.

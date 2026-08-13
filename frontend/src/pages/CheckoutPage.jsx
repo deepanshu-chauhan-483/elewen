@@ -236,7 +236,7 @@ function getCartItemImage(item) {
   return ''
 }
 
-function CheckoutItemRow({ image, title, meta, value }) {
+function CheckoutItemRow({ image, title, meta, value, hideMetaOnMobile = false }) {
   return (
     <div className="flex items-start gap-3">
       <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-[#E8E2DA] sm:h-16 sm:w-16">
@@ -255,7 +255,15 @@ function CheckoutItemRow({ image, title, meta, value }) {
           <p className="text-[13px] font-medium leading-[1.35] text-[#1C1C1C] sm:text-sm">{title}</p>
           <p className="shrink-0 text-[13px] font-medium text-[#1C1C1C] sm:text-sm">{value}</p>
         </div>
-        {meta ? <p className="mt-1 text-xs text-[#767676]">{meta}</p> : null}
+        {meta ? (
+          <p
+            className={`mt-1 text-xs text-[#767676]${
+              hideMetaOnMobile ? ' price-summary-elements hidden md:block' : ''
+            }`}
+          >
+            {meta}
+          </p>
+        ) : null}
       </div>
     </div>
   )
@@ -1453,19 +1461,22 @@ export default function CheckoutPage() {
                     const optionsText = getSelectedOptionsText(getDisplaySelectedOptions(item))
                     const quantityLabel =
                       getCartItemQuantity(item) > 1 ? ` x${getCartItemQuantity(item)}` : ''
+                    const additionalInfo = String(item?.additionalInfo ?? '').trim()
 
                     return (
                       <div key={item.id}>
                         <CheckoutItemRow
                           image={getCartItemImage(item)}
                           title={`${packageLineLabel}${quantityLabel}`}
-                          meta={
-                            [optionsText, item?.additionalInfo ? `Additional Info: ${item.additionalInfo}` : '']
-                              .filter(Boolean)
-                              .join(' · ')
-                          }
+                          meta={optionsText}
+                          hideMetaOnMobile
                           value={formatCurrency(summary.total)}
                         />
+                        {additionalInfo ? (
+                          <p className="mt-1 pl-[4.25rem] text-xs text-[#767676] sm:pl-[4.75rem]">
+                            Additional Info: {additionalInfo}
+                          </p>
+                        ) : null}
                       </div>
                     )
                   })}
