@@ -383,3 +383,15 @@
 **Consulted sources:** `BookingConfirmation.jsx`, `CartPage.jsx` mobile padding, `NavHeader.jsx` fixed shell
 
 **Prevention guidance:** Any page under the fixed nav needs mobile `pt-20` (or larger), not `py-10` alone.
+
+## 2026-08-13: Cart coupon dropdown missing banner codes
+
+**Root cause:** Apply Coupon only listed account grants; site-wide banner coupons required copy/paste into a manual input.
+
+**Failure symptoms:** Admin-shared banner coupons did not appear in the cart dropdown.
+
+**Fix details:** Merge `/coupons/banners` with active account coupons into one dropdown; removed helper copy and manual code field.
+
+**Consulted sources:** `CheckoutCouponSection.jsx`, `useDiscountBanners.js`, `listSharedDiscountBanners`
+
+**Prevention guidance:** Banner-shared public coupons belong in the cart dropdown with account coupons; do not rely on copy/paste only.
