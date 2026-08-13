@@ -330,12 +330,14 @@ function HeaderActions({
   iconColor,
   className = '',
 }) {
+  const { pathname } = useLocation()
+  const postLoginPath = pathname === '/cart' ? '/checkout' : DASHBOARD_HOME_PATH
   const wishlistHref = isLoggedIn
     ? WISHLIST_PATH
     : `/login?redirect=${encodeURIComponent(WISHLIST_PATH)}`
   const userHref = isLoggedIn
     ? DASHBOARD_HOME_PATH
-    : `/login?redirect=${encodeURIComponent(DASHBOARD_HOME_PATH)}`
+    : `/login?redirect=${encodeURIComponent(postLoginPath)}`
 
   const actionClass =
     'relative inline-flex h-8 w-8 shrink-0 items-center justify-center p-0 m-0 leading-none'
@@ -1190,6 +1192,7 @@ const NavHeader = ({ forcedThemeName = null, backgroundColorOverride = null }) =
               ) : (
                 <Link
                   to="/login"
+                  state={{ from: pathname === '/cart' ? '/checkout' : pathname }}
                   onClick={() => setOpen(false)}
                   className="group flex w-fit items-center rounded-full bg-[#FFFFFF] pl-6 pr-1.5 py-1.5 transition-colors hover:bg-[#FAFAFA]"
                 >

@@ -125,7 +125,7 @@ export default function CheckoutCouponSection({
       <div className="space-y-4">
         {!isLoggedIn ? (
           <p className="text-sm text-[#7A7A7A]">
-            <Link to="/login" state={{ from: '/cart' }} className="font-medium underline underline-offset-2">
+            <Link to="/login" state={{ from: '/checkout' }} className="font-medium underline underline-offset-2">
               Log in
             </Link>{' '}
             to see and apply your available coupons.
