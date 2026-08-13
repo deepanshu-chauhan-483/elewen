@@ -14,6 +14,7 @@ import CmsPageLoader from '../components/common/CmsPageLoader'
 import BrandedImage from '../components/common/BrandedImage'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { getPackageLineLabel, getSelectedOptionsText } from '../lib/bookingDisplay'
+import { getDateInputMin } from '../lib/dateInput'
 import { useServiceAreas } from '../hooks/useServiceAreas'
 import { getDeliveryChargeForPincode, useDeliveryCharges } from '../hooks/useDeliveryCharges'
 import PriceSummaryDiscountRows from '../components/cart/PriceSummaryDiscountRows'
@@ -33,18 +34,6 @@ function formatCurrency(value) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`
-}
-
-function getMinEventDate() {
-  const today = new Date()
-  const minDate = new Date(today)
-  minDate.setDate(minDate.getDate() + 4)
-
-  const year = minDate.getFullYear()
-  const month = String(minDate.getMonth() + 1).padStart(2, '0')
-  const day = String(minDate.getDate()).padStart(2, '0')
-
-  return `${year}-${month}-${day}`
 }
 
 function normalizePincode(value = '') {
@@ -780,7 +769,7 @@ function SinglePackageCard({
                   <p className="text-sm text-gray-500">Event Date</p>
                   <DateTimePicker
                     type="date"
-                    min={getMinEventDate()}
+                    min={getDateInputMin({ offsetDays: 3 })}
                     value={detailsForm.eventDate}
                     onChange={event => onDetailsChange('eventDate', event.target.value)}
                     className="mt-2 w-full border-b border-[#2D2D2D] bg-transparent pb-2 text-[15px] text-[#2C2C2C] outline-none"

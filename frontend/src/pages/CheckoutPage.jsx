@@ -20,6 +20,7 @@ import BrandedImage from '../components/common/BrandedImage'
 import { getGuestCountFromCartItems } from '../lib/cateringAddonPricing'
 import { aggregateAppliedGuestDiscounts, aggregateTransportAddonTotal, getCartItemSummary } from '../lib/cartItemPricing'
 import { getPackageLineLabel, getSelectedOptionsText } from '../lib/bookingDisplay'
+import { getDateInputMin } from '../lib/dateInput'
 import { useCateringGuestDiscounts } from '../hooks/useCateringGuestDiscounts'
 import { openCashfreeCheckout } from '../lib/cashfreeCheckout'
 import {
@@ -99,18 +100,6 @@ function formatCurrency(value) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`
-}
-
-function getMinEventDate() {
-  const today = new Date()
-  const minDate = new Date(today)
-  minDate.setDate(minDate.getDate() + 6) // Disable next 5 days + today = 6 days minimum
-
-  const year = minDate.getFullYear()
-  const month = String(minDate.getMonth() + 1).padStart(2, '0')
-  const day = String(minDate.getDate()).padStart(2, '0')
-
-  return `${year}-${month}-${day}`
 }
 
 function normalizePincode(value = '') {
@@ -1644,7 +1633,7 @@ export default function CheckoutPage() {
                     <CheckoutFieldLabel label="Event Date" required />
                     <DateTimePicker
                       type="date"
-                      min={getMinEventDate()}
+                      min={getDateInputMin({ offsetDays: 3 })}
                       value={eventDate}
                       onChange={event => {
                         setFieldErrors(prev => ({ ...prev, eventDate: '' }))
