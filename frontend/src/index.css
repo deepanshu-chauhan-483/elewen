@@ -1811,6 +1811,29 @@ html.home-scroll-restoring::before {
   transform: scale(1.1);
 }
 
+/* Profile: Claim your coupon — button look, visible to all users */
+.profile-claim-coupon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid #cdb17e;
+  background: #ffffff;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: #cdb17e;
+  text-decoration: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.profile-claim-coupon-btn:hover {
+  background: #faf6f1;
+  color: #b89e6e;
+  text-decoration: none;
+}
+
 /* Cart + checkout: tighter type on mobile only (desktop unchanged) */
 @media (max-width: 767px) {
   .elewen-cart-page h2,

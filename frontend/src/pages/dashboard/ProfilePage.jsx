@@ -10,7 +10,6 @@ import {
   useDashboardSession,
   useDashboardUpdateProfile,
   useDashboardCoupons,
-  useDashboardBookings,
 } from '../../hooks/useDashboardData'
 import { getInitials } from '../../components/dashboard/dashboardUtils'
 import MobileDashboardMenuSection from '../../components/dashboard/MobileDashboardMenuSection'
@@ -78,7 +77,6 @@ function ProfileValue({ value }) {
 export default function ProfilePage() {
   const { data: session, isLoading: sessionLoading, error: sessionError } = useDashboardSession()
   const { data: coupons = [], isLoading: couponsLoading } = useDashboardCoupons()
-  const { data: previousBookings = [] } = useDashboardBookings('previous')
   const updateProfileMutation = useDashboardUpdateProfile()
   const [isEditing, setIsEditing] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
@@ -90,16 +88,6 @@ export default function ProfilePage() {
   const fullName = useMemo(() => buildFullName(session), [session])
   const photoUrl = session?.profile?.photoUrl || null
   const displayForm = isEditing ? form : initialForm
-  const hasPreviousBooking = useMemo(
-    () =>
-      previousBookings.some(booking => {
-        const status = String(booking?.status ?? '')
-          .trim()
-          .toLowerCase()
-        return status === 'completed'
-      }),
-    [previousBookings]
-  )
 
   if (sessionLoading) {
     return <DashboardLoadingState title="Loading your profile..." />
@@ -321,14 +309,9 @@ export default function ProfilePage() {
               Referral and reward coupons sent to your account. Copy a code to use at checkout.
             </p>
           </div>
-          {hasPreviousBooking ? (
-            <Link
-              to="/user-dashboard/previous"
-              className="shrink-0 text-sm font-medium text-[#957960] underline underline-offset-2 hover:text-[#7A624E]"
-            >
-              Claim your coupon
-            </Link>
-          ) : null}
+          <Link to="/user-dashboard/previous" className="profile-claim-coupon-btn shrink-0">
+            Claim your coupon
+          </Link>
         </div>
 
         {couponsLoading ? (
