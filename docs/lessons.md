@@ -371,3 +371,15 @@
 **Consulted sources:** `CartPage.jsx` PriceSummaryCard, `CheckoutPage.jsx` CheckoutItemRow, `index.css`
 
 **Prevention guidance:** Price Summary element detail is desktop-only; never inline options into the mobile package title string.
+
+## 2026-08-13: Booking confirmation title cut by mobile nav
+
+**Root cause:** Confirmation page used `py-10` on mobile under a fixed `NavHeader`, so only ~40px top padding sat under the bar and the H1 clipped.
+
+**Failure symptoms:** "Your Celebration Is Booked!" appeared cut off behind the black header on phones.
+
+**Fix details:** Mobile top padding set to `pt-20` (same as cart); desktop keeps `md:pt-24`.
+
+**Consulted sources:** `BookingConfirmation.jsx`, `CartPage.jsx` mobile padding, `NavHeader.jsx` fixed shell
+
+**Prevention guidance:** Any page under the fixed nav needs mobile `pt-20` (or larger), not `py-10` alone.

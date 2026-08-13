@@ -362,7 +362,7 @@ export default function BookingConfirmation() {
 
   if (isSheeshaCodBooking) {
     return (
-      <div className="min-h-screen bg-[#FAF9F7] px-4 py-10 md:px-8 md:pt-24 lg:px-16">
+      <div className="min-h-screen bg-[#FAF9F7] px-4 pb-10 pt-20 md:px-8 md:pt-24 lg:px-16">
         <div className="flex flex-col gap-[clamp(24px,6vw,80px)] md:flex-row">
           <div className="flex-1 space-y-6">
             <h1 className="mb-2 text-[16px] font-semibold text-[#2C2C2C] md:text-[27px]">
@@ -429,7 +429,7 @@ export default function BookingConfirmation() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F7] px-4 py-10 md:px-8 md:pt-24 lg:px-16">
+    <div className="min-h-screen bg-[#FAF9F7] px-4 pb-10 pt-20 md:px-8 md:pt-24 lg:px-16">
       <div className="flex flex-col gap-[clamp(24px,6vw,150px)] md:flex-row">
         <div className="flex-1 space-y-6">
           <h1 className="mb-2 text-[16px] font-semibold text-[#2C2C2C] md:text-[27px]">
