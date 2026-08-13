@@ -133,19 +133,19 @@ function CartQuantityControl({ quantity, disabled, onDecrement, onIncrement }) {
         type="button"
         onClick={onDecrement}
         disabled={disabled || quantity <= 1}
-        className="flex h-[28px] w-[28px] items-center justify-center border-r border-[#D9D9D9] text-[16px] font-light text-black disabled:opacity-40"
+        className="flex h-[24px] w-[24px] items-center justify-center border-r border-[#D9D9D9] text-[14px] font-light text-black disabled:opacity-40 md:h-[28px] md:w-[28px] md:text-[16px]"
         aria-label="Decrease quantity"
       >
         −
       </button>
-      <div className="flex h-[28px] min-w-[28px] items-center justify-center px-1 text-[14px] font-medium text-black">
+      <div className="flex h-[24px] min-w-[24px] items-center justify-center px-1 text-[12px] font-medium text-black md:h-[28px] md:min-w-[28px] md:text-[14px]">
         {quantity}
       </div>
       <button
         type="button"
         onClick={onIncrement}
         disabled={disabled}
-        className="flex h-[28px] w-[28px] items-center justify-center border-l border-[#D9D9D9] text-[16px] font-light text-black disabled:opacity-40"
+        className="flex h-[24px] w-[24px] items-center justify-center border-l border-[#D9D9D9] text-[14px] font-light text-black disabled:opacity-40 md:h-[28px] md:w-[28px] md:text-[16px]"
         aria-label="Increase quantity"
       >
         +
@@ -559,10 +559,10 @@ function SinglePackageCard({ item, pendingItemId, onRemoveItem, onUpdateQuantity
   const additionalInfo = String(item?.additionalInfo ?? '').trim()
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <div className="relative flex gap-3 overflow-hidden rounded-xl border border-[#95796066] p-3 md:gap-4 md:p-4">
+    <div className="space-y-3 md:space-y-6">
+      <div className="relative flex gap-2.5 overflow-hidden rounded-xl border border-[#95796066] p-2.5 md:gap-4 md:p-4">
         <div className="absolute left-0 top-0 h-full w-[3px] rounded-l-xl bg-[#957960]" />
-        <div className="ml-1.5 h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-200 md:ml-2 md:h-20 md:w-20">
+        <div className="ml-1 h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-gray-200 md:ml-2 md:h-20 md:w-20">
           {packageImage ? (
             <BrandedImage
               src={packageImage}
@@ -574,10 +574,10 @@ function SinglePackageCard({ item, pendingItemId, onRemoveItem, onUpdateQuantity
         </div>
 
         <div className="min-w-0 flex-1 items-start">
-          <p className="text-[10px] md:text-[12px] text-[#A5A39E]">{packageSubtitle}</p>
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <p className="text-[9px] leading-tight text-[#A5A39E] md:text-[12px]">{packageSubtitle}</p>
+          <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-1.5 md:gap-2">
             <h3
-              className="min-w-0 font-medium text-[12px] leading-snug md:text-[14px] text-[#1C1C1C]"
+              className="min-w-0 font-medium text-[11px] leading-snug text-[#1C1C1C] md:text-[14px]"
               style={{ fontFamily: "'Poppins'" }}
             >
               {packageTitle}
@@ -592,11 +592,11 @@ function SinglePackageCard({ item, pendingItemId, onRemoveItem, onUpdateQuantity
         </div>
       </div>
 
-      <div className="grid w-full grid-cols-2 gap-2">
+      <div className="grid w-full grid-cols-2 gap-1.5 md:gap-2">
         {packageHref ? (
           <Link
             to={packageHref}
-            className="flex h-[36px] w-full items-center justify-center gap-2 rounded-full bg-[#2E3A1F] text-[12px] font-medium text-white md:h-[40px] md:text-[13px]"
+            className="flex h-[32px] w-full items-center justify-center gap-1.5 rounded-full bg-[#2E3A1F] text-[11px] font-medium text-white md:h-[40px] md:gap-2 md:text-[13px]"
           >
             <EditIcon />
             Edit Package
@@ -604,7 +604,7 @@ function SinglePackageCard({ item, pendingItemId, onRemoveItem, onUpdateQuantity
         ) : (
           <button
             type="button"
-            className="flex h-[36px] w-full items-center justify-center gap-2 rounded-full bg-[#2E3A1F] text-[12px] font-medium text-white md:h-[40px] md:text-[13px]"
+            className="flex h-[32px] w-full items-center justify-center gap-1.5 rounded-full bg-[#2E3A1F] text-[11px] font-medium text-white md:h-[40px] md:gap-2 md:text-[13px]"
           >
             <EditIcon />
             Edit Package
@@ -615,7 +615,7 @@ function SinglePackageCard({ item, pendingItemId, onRemoveItem, onUpdateQuantity
           type="button"
           onClick={() => onRemoveItem(item.id)}
           disabled={isPending}
-          className="flex h-[36px] w-full items-center justify-center gap-2 rounded-full bg-[#6B1D0C] text-[12px] font-medium text-white disabled:opacity-60 md:h-[40px] md:text-[13px]"
+          className="flex h-[32px] w-full items-center justify-center gap-1.5 rounded-full bg-[#6B1D0C] text-[11px] font-medium text-white disabled:opacity-60 md:h-[40px] md:gap-2 md:text-[13px]"
         >
           <DeleteIcon />
           {isPending ? 'Updating...' : 'Delete Package'}
@@ -623,21 +623,26 @@ function SinglePackageCard({ item, pendingItemId, onRemoveItem, onUpdateQuantity
       </div>
 
       <div className="overflow-hidden rounded-xl border border-[#95796066]">
-        <div className="flex justify-between bg-[#F8F4ED] px-3 py-2.5 md:px-4 md:py-3">
-          <h3 className="text-sm font-medium md:text-base" style={{ fontFamily: "'Poppins'" }}>
+        <div className="flex justify-between bg-[#F8F4ED] px-2.5 py-2 md:px-4 md:py-3">
+          <h3
+            className="text-[12px] font-medium md:text-base"
+            style={{ fontFamily: "'Poppins'" }}
+          >
             Selected Elements
           </h3>
-          <span className="text-sm text-gray-500">{selectedElements.length} elements</span>
+          <span className="text-[11px] text-gray-500 md:text-sm">
+            {selectedElements.length} elements
+          </span>
         </div>
 
-        <div className="space-y-3 p-3 md:space-y-4 md:p-4">
+        <div className="space-y-2 p-2.5 md:space-y-4 md:p-4">
           {selectedElements.length ? (
             selectedElements.map(element => (
               <div
                 key={`${element.label}-${element.value}`}
-                className="flex border-b border-[#00000033] pb-3 last:border-none last:pb-0"
+                className="flex border-b border-[#00000033] pb-2 last:border-none last:pb-0 md:pb-3"
               >
-                <div className="p-2">
+                <div className="p-1.5 md:p-2">
                   <svg
                     width="6"
                     height="6"
@@ -648,27 +653,31 @@ function SinglePackageCard({ item, pendingItemId, onRemoveItem, onUpdateQuantity
                     <circle cx="3" cy="3" r="3" fill="#D5D5D5" />
                   </svg>
                 </div>
-                <div>
-                  <p className="font-medium text-[#2C2C2C]">{element.value}</p>
-                  <p className="text-sm text-gray-500">{element.label}</p>
+                <div className="min-w-0">
+                  <p className="text-[12px] font-medium text-[#2C2C2C] md:text-[15px]">
+                    {element.value}
+                  </p>
+                  <p className="text-[11px] text-gray-500 md:text-sm">{element.label}</p>
                 </div>
               </div>
             ))
           ) : (
-            <p className="text-[13px] text-[#8B8B8B]">Package details will appear here.</p>
+            <p className="text-[12px] text-[#8B8B8B] md:text-[13px]">
+              Package details will appear here.
+            </p>
           )}
         </div>
       </div>
 
       {additionalInfo ? (
         <div className="overflow-hidden rounded-xl border border-[#95796066]">
-          <div className="bg-[#F8F4ED] px-4 py-3">
-            <h3 className="font-medium" style={{ fontFamily: "'Poppins'" }}>
+          <div className="bg-[#F8F4ED] px-2.5 py-2 md:px-4 md:py-3">
+            <h3 className="text-[12px] font-medium md:text-base" style={{ fontFamily: "'Poppins'" }}>
               Additional Info
             </h3>
           </div>
-          <div className="p-4">
-            <p className="text-sm leading-[1.6] text-[#2C2C2C] whitespace-pre-wrap">
+          <div className="p-2.5 md:p-4">
+            <p className="text-[12px] leading-[1.55] text-[#2C2C2C] whitespace-pre-wrap md:text-sm md:leading-[1.6]">
               {additionalInfo}
             </p>
           </div>
@@ -798,23 +807,26 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 md:space-y-4">
       {groupedItems.map(group => (
         <div
           key={group.category}
           className={`overflow-hidden rounded-lg border ${group.border} ${group.bg}`}
         >
-          <div className="flex justify-between border-b border-[#95796033] px-4 py-3">
-            <h2 className="font-medium text-[#2C2C2C]" style={{ fontFamily: "'Poppins'" }}>
+          <div className="flex justify-between border-b border-[#95796033] px-3 py-2 md:px-4 md:py-3">
+            <h2
+              className="text-[13px] font-medium text-[#2C2C2C] md:text-base"
+              style={{ fontFamily: "'Poppins'" }}
+            >
               {group.icon ? `${group.icon} ` : ''}
               {group.category}
             </h2>
-            <span className="text-sm text-gray-500">
+            <span className="text-[11px] text-gray-500 md:text-sm">
               {group.packages.reduce((sum, item) => sum + getCartItemQuantity(item), 0)} packages
             </span>
           </div>
 
-          <div className="space-y-4 bg-[#FFFFFF] p-4">
+          <div className="space-y-3 bg-[#FFFFFF] p-2.5 md:space-y-4 md:p-4">
             {group.packages.map(item => {
               const isPending = pendingItemId === item.id
               const packageQuantity = getCartItemQuantity(item)
@@ -857,7 +869,7 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
               return (
                 <div
                   key={item.id}
-                  className="relative flex gap-4 rounded-lg border border-[#94949433] bg-[#FFFFFF] p-4"
+                  className="relative flex gap-3 rounded-lg border border-[#94949433] bg-[#FFFFFF] p-2.5 md:gap-4 md:p-4"
                 >
                   <div className="flex-1 pl-2">
                     <div className="flex justify-between gap-4">
@@ -866,13 +878,13 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
                         {canViewPackage ? (
                           <Link
                             to={packageHref}
-                            className="font-medium text-[#2C2C2C] transition-colors hover:text-[#5A1E0E]"
+                            className="text-[12px] font-medium text-[#2C2C2C] transition-colors hover:text-[#5A1E0E] md:text-[15px]"
                           >
                             {packageTitle}
                           </Link>
                         ) : (
                           <h3
-                            className="font-medium text-[#2C2C2C]"
+                            className="text-[12px] font-medium text-[#2C2C2C] md:text-[15px]"
                             style={{ fontFamily: "'Poppins'" }}
                           >
                             {packageTitle}
@@ -887,18 +899,18 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
                       </div>
 
                       <div className="text-right">
-                        <p className="font-semibold text-[#2C2C2C]">
+                        <p className="text-[12px] font-semibold text-[#2C2C2C] md:text-[15px]">
                           {formatCurrency(item.totalPrice)}
                         </p>
-                        <p className="text-xs text-gray-500">per event</p>
+                        <p className="text-[10px] text-gray-500 md:text-xs">per event</p>
                       </div>
                     </div>
 
-                    <div className="mt-2 flex flex-wrap gap-2">
+                    <div className="mt-1.5 flex flex-wrap gap-1.5 md:mt-2 md:gap-2">
                       {tags.map(tag => (
                         <span
                           key={`${item.id}-${tag}`}
-                          className="rounded-full bg-[#EFE7DC] px-2 py-1 text-xs text-[#591902]"
+                          className="rounded-full bg-[#EFE7DC] px-1.5 py-0.5 text-[10px] text-[#591902] md:px-2 md:py-1 md:text-xs"
                         >
                           {tag}
                         </span>
@@ -906,14 +918,16 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
                     </div>
 
                     {isMixedSheeshaCart && isSheeshaCartItem(item) ? (
-                      <p className="mt-2 text-sm text-[#591902]">{MIXED_HOOKAH_ITEM_HINT}</p>
+                      <p className="mt-1.5 text-[11px] text-[#591902] md:mt-2 md:text-sm">
+                        {MIXED_HOOKAH_ITEM_HINT}
+                      </p>
                     ) : null}
 
-                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <div className="mt-3 flex flex-wrap items-center gap-1.5 md:mt-4 md:gap-2">
                       {item?.itemType !== 'addon' ? (
                         <Link
                           to={`/single-package-cart?itemId=${encodeURIComponent(item.id)}`}
-                          className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100"
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 md:h-9 md:w-9"
                           aria-label="View package"
                           title="View package"
                         >
@@ -925,7 +939,7 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
                           type="button"
                           onClick={() => handleToggleWishlist(item)}
                           disabled={isPending || isWishlistPending || !wishlistPackageId}
-                          className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-[#EFE7DC] disabled:opacity-60"
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-[#EFE7DC] disabled:opacity-60 md:h-9 md:w-9"
                           aria-label={
                             isWishlistPending
                               ? 'Updating wishlist'
@@ -965,7 +979,7 @@ function MultiPackageList({ cartItems, pendingItemId, onRemoveItem, onUpdateQuan
                         type="button"
                         onClick={() => onRemoveItem(item.id)}
                         disabled={isPending}
-                        className="flex h-9 w-9 items-center justify-center rounded-full bg-[#5A1E0E] text-white disabled:opacity-60"
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-[#5A1E0E] text-white disabled:opacity-60 md:h-9 md:w-9"
                         aria-label="Delete package"
                         title="Delete package"
                       >
