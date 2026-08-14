@@ -789,8 +789,7 @@ function getPackageListingPopulateParams() {
     'populate[packages][on][package.sheeshapackage][populate][elements][populate]': 'service',
     'populate[packages][on][package.bartendingpackage][populate][inclusions]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][budget_level]': 'true',
-    'populate[packages][on][package.cateringpackage][populate][inclusions]': 'true',
-    'populate[packages][on][package.cateringpackage][populate][budget_level]': 'true',
+    'populate[packages][on][package.cateringpackage][populate]': '*',
   }
 }
 
@@ -912,7 +911,7 @@ async function fetchPackageById(packageId, { listing = false } = {}) {
 
 export function usePackageById(packageId) {
   return useQuery({
-    queryKey: ['package', packageId, 'live-v7-catering-exclusions'],
+    queryKey: ['package', packageId, 'live-v8-catering-exclusions'],
     enabled: Boolean(packageId),
     queryFn: async () => {
       const pkg = await fetchPackageById(packageId, { listing: false })

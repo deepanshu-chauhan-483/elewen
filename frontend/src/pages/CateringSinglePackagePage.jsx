@@ -26,6 +26,7 @@ import {
   getCateringPricePerPerson,
   getCateringPriceRangeLabel,
 } from '../lib/cateringPricing'
+import { getCateringPackageExclusions } from '../lib/cateringPackageExclusions'
 import { resolveCateringAddonLineTotal } from '../lib/cateringAddonPricing'
 import { buildCateringCartLineTotal } from '../lib/cateringCartPricing'
 import { resolveCateringGuestDiscount } from '../lib/cateringGuestDiscount'
@@ -600,7 +601,9 @@ export default function CateringSinglePackagePage() {
     if (sectionExclusions.length) return sectionExclusions
 
     const cmsExclusions = Array.isArray(pkg?.detail_exclusions) ? pkg.detail_exclusions : []
-    return cmsExclusions.length ? cmsExclusions : []
+    if (cmsExclusions.length) return cmsExclusions
+
+    return getCateringPackageExclusions(pkg, cateringSection)
   }, [cateringSection, pkg])
 
   useEffect(() => {
