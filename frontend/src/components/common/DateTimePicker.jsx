@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { buildExcludeDateSet } from '../../lib/dateInput'
 
 const MONTH_LABELS = [
   'January',
@@ -71,6 +72,7 @@ export default function DateTimePicker({
   className = '',
   style,
   min,
+  excludeDates,
   disabled = false,
   placeholder,
   name,
@@ -83,6 +85,7 @@ export default function DateTimePicker({
   const popoverRef = useRef(null)
   const parsedValue = useMemo(() => parseDateInput(value), [value])
   const minDate = useMemo(() => parseDateInput(min), [min])
+  const excludeDateSet = useMemo(() => buildExcludeDateSet(excludeDates), [excludeDates])
   const [visibleMonth, setVisibleMonth] = useState(() => parsedValue ?? minDate ?? new Date())
   const calendarDays = useMemo(() => getCalendarDays(visibleMonth), [visibleMonth])
   const timeOptions = useMemo(() => buildTimeOptions(), [])
@@ -241,7 +244,8 @@ export default function DateTimePicker({
                       if (!day) return <span key={`blank-${index}`} className="h-9" />
 
                       const dayValue = toDateInputValue(day)
-                      const isDisabled = normalizedMin && dayValue < normalizedMin
+                      const isDisabled =
+                        (normalizedMin && dayValue < normalizedMin) || excludeDateSet.has(dayValue)
                       const isSelected = dayValue === normalizedValue
 
                       return (

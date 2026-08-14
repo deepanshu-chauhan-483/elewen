@@ -11,3 +11,8 @@ export function getDateInputMin({ offsetDays = 0 } = {}) {
   date.setDate(date.getDate() + offsetDays)
   return toDateInputValue(date)
 }
+
+export function buildExcludeDateSet(excludeDates) {
+  const dates = Array.isArray(excludeDates) ? excludeDates.filter(d => typeof d === 'string') : []
+  return new Set(dates)
+}

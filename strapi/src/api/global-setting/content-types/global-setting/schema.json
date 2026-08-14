@@ -29,6 +29,10 @@
     },
     "response_expectation_text": {
       "type": "text"
+    },
+    "blocked_dates": {
+      "type": "json",
+      "default": []
     }
   }
 }

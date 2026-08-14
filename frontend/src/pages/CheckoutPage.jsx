@@ -1645,6 +1645,7 @@ export default function CheckoutPage() {
                     <DateTimePicker
                       type="date"
                       min={getDateInputMin({ offsetDays: 3 })}
+                      excludeDates={globalSettings?.blocked_dates ?? []}
                       value={eventDate}
                       onChange={event => {
                         setFieldErrors(prev => ({ ...prev, eventDate: '' }))
