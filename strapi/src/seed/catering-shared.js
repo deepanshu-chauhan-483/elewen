@@ -207,12 +207,28 @@ function packageHasCateringBlock(entry) {
   return blocks.some(block => block?.__component === 'package.cateringpackage');
 }
 
+function cateringNestedFieldsPopulated(block) {
+  if (!block || block.__component !== 'package.cateringpackage') return true;
+  return (
+    (Array.isArray(block.menu_items) && block.menu_items.length > 0) ||
+    (Array.isArray(block.inclusions) && block.inclusions.length > 0)
+  );
+}
+
 async function findPackageBySlug(strapi, slug) {
   for (const status of ['published', 'draft']) {
     const rows = await strapi.documents('api::package.package').findMany({
       filters: { slug: { $eq: slug } },
       status,
-      populate: { packages: true },
+      populate: {
+        packages: {
+          on: {
+            'package.cateringpackage': {
+              populate: '*',
+            },
+          },
+        },
+      },
       limit: 1,
     });
 
@@ -334,6 +350,17 @@ async function ensureCateringPackage(
       });
 
       if (levelChanged && nextBudgetLevel) {
+        const nestedMissing = existingBlocks.some(
+          block =>
+            block?.__component === 'package.cateringpackage' && !cateringNestedFieldsPopulated(block)
+        );
+        if (nestedMissing) {
+          strapi.log.warn(
+            `[seed/catering] Skip budget_level rewrite for "${pkgSeed.slug}" because nested catering fields were not populated`
+          );
+          return { skipped: true, documentId: entry.documentId, title: pkgSeed.title };
+        }
+
         const sanitized = nextBlocks.map(block => {
           if (block?.__component !== 'package.cateringpackage') return block;
           const copy = { ...block, budget_level: nextBudgetLevel };
@@ -501,6 +528,8 @@ module.exports = {
   findPublishedBySlug,
   findPackageBySlug,
   packageHasCateringBlock,
+  cateringNestedFieldsPopulated,
+  normalizeCateringMenuItems,
   shouldRefreshExistingCatering,
   ensureCateringPolicy,
   ensureCateringServiceCategory,

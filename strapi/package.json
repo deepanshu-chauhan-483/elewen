@@ -18,6 +18,7 @@
     "seed:catering-addons": "node scripts/seed-catering-addons.cjs",
     "seed:catering-discounts": "node scripts/seed-catering-discounts.cjs",
     "seed:catering-repair": "node scripts/seed-catering-repair-packages.cjs",
+    "patch:catering-exclusions": "node scripts/patch-catering-exclusions.cjs",
     "seed:decor": "node scripts/run-decor-seed.cjs",
     "seed:decor-bachelorette": "node scripts/run-bachelorette-seed.cjs",
     "seed:excel-decor": "node scripts/run-excel-decor-seed.cjs",

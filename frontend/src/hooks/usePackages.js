@@ -822,15 +822,7 @@ function getPackagePopulateParams() {
     'populate[packages][on][package.bartendingpackage][populate][price_breakdown]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][budget_level]': 'true',
     'populate[packages][on][package.bartendingpackage][populate][pricing_rules]': 'true',
-    'populate[packages][on][package.cateringpackage][populate][menu_items]': 'true',
-    'populate[packages][on][package.cateringpackage][populate][inclusions]': 'true',
-    'populate[packages][on][package.cateringpackage][populate][exclusions]': 'true',
-    'populate[packages][on][package.cateringpackage][populate][addons]': 'true',
-    'populate[packages][on][package.cateringpackage][populate][policy]': 'true',
-    'populate[packages][on][package.cateringpackage][populate][price_covers]': 'true',
-    'populate[packages][on][package.cateringpackage][populate][price_breakdown]': 'true',
-    'populate[packages][on][package.cateringpackage][populate][budget_level]': 'true',
-    'populate[packages][on][package.cateringpackage][populate][pricing_rules]': 'true',
+    'populate[packages][on][package.cateringpackage][populate]': '*',
   }
 }
 
@@ -920,7 +912,7 @@ async function fetchPackageById(packageId, { listing = false } = {}) {
 
 export function usePackageById(packageId) {
   return useQuery({
-    queryKey: ['package', packageId, 'live-v6'],
+    queryKey: ['package', packageId, 'live-v7-catering-exclusions'],
     enabled: Boolean(packageId),
     queryFn: async () => {
       const pkg = await fetchPackageById(packageId, { listing: false })

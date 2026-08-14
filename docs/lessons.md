@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-14: Catering exclusions seeded but missing on the frontend
+
+**Root cause:** Catering exclusions were in CMS, but Strapi v5 dynamic-zone populate did not return nested repeatables unless the catering fragment used `populate: '*'`. Listing/detail queries that targeted individual nested keys (`exclusions: true` next to `menu_items: true`) came back empty. A budget_level boot sync that rewrote the zone from `populate: { packages: true }` could also drop those arrays.
+
+**Failure symptoms:** Catering PDP Exclusions row opened to the empty CMS placeholder. A raw package GET showed `exclusions: []` even when Admin/seed had the rows.
+
+**Fix details:** Package controller enrich now populates `package.cateringpackage` with `*`. Frontend detail populate uses the same fragment. `findPackageBySlug` uses that fragment so boot sync can see nested rows. Budget_level rewrite is skipped when nested fields are missing. Added `npm run patch:catering-exclusions` (bootstrap seeds off, port 1338) which confirmed all 13 catering packages already had seed exclusions.
+
+**Consulted sources:** Strapi populate error on polymorphic `populate`, live GET `/api/packages?filters[slug][$eq]=close-circle-catering-1`
+
+**Prevention guidance:** For Strapi v5 dynamic zones, populate nested components with `on` + `populate: '*'`. Never write a dynamic zone back from a shallow populate.
+
 ## 2026-08-11: Admin Today bookings vanished next day; cancels sorted by booking age
 
 **Root cause:** Today's Bookings filtered strictly by IST `createdAt` day with no admin-seen tracking, so unopened bookings disappeared after midnight. Cancelled and Payment Cancelled/Refunds lists ordered by `booking.createdAt`, so a newly cancelled old booking appeared at the bottom.

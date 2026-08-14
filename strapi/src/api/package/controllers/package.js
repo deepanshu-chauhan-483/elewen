@@ -161,17 +161,7 @@ const nestedPackagePopulate = {
         },
       },
       'package.cateringpackage': {
-        populate: {
-          menu_items: true,
-          inclusions: true,
-          exclusions: true,
-          addons: true,
-          policy: true,
-          price_covers: true,
-          price_breakdown: true,
-          budget_level: true,
-          pricing_rules: true,
-        },
+        populate: '*',
       },
     },
   },
