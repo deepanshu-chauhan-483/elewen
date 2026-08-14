@@ -724,6 +724,7 @@ function normalizePackage(pkg, index = 0, options = {}) {
     discount_value: Number(pkg.discount_value ?? 0) || 0,
     discount_valid_from: pkg.discount_valid_from ?? null,
     discount_valid_to: pkg.discount_valid_to ?? null,
+    most_booked_tag: pkg.most_booked_tag === true,
     base_price: numericBaseForSale,
     includes: packageIncludes,
     tags: packageIncludes,

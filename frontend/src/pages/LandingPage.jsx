@@ -3095,12 +3095,13 @@ const PackagesSection = () => {
   }, [])
 
   // CMS: Strapi `packages` with elements, addons, images — fallback when Strapi is off/empty
-  // Most Loved only: hide corporate packages (they still appear under Corporate listings).
+  // Most Loved only: packages with most_booked_tag, excluding corporate (corporate stays on listings).
   const { data: cmsPackages = [] } = usePackages()
   const packagesData = useMemo(() => {
     const sourcePackages = cmsPackages.length > 0 ? cmsPackages : PACKAGES_FALLBACK
 
     return sourcePackages
+      .filter(pkg => pkg.most_booked_tag === true)
       .filter(pkg => !isCorporatePackage(pkg))
       .map((pkg, i) => {
         const { images, fallbackImages } = resolvePackageImages(pkg, i)
@@ -3352,7 +3353,7 @@ const PackagesSection = () => {
       </div>
 
       {/* --- 2. Carousel - 3D cylinder --- */}
-      <div className="relative w-full overflow-x-hidden mt-[24px] md:mt-8">
+      <div className="package-carousel-viewport relative w-full overflow-x-visible md:overflow-x-hidden mt-[24px] md:mt-8">
         {/* Top curved edge (Hidden on mobile to save space, z-0 to stay behind cards) */}
         <div
           className="absolute left-1/2 -translate-x-1/2 top-0 w-[1440px] max-w-[100vw] h-[100px] z-0 pointer-events-none hidden md:block"
@@ -3364,7 +3365,10 @@ const PackagesSection = () => {
 
         {isMobile ? (
           <div className="relative min-h-[480px] w-full z-10">
-            <div className="mobile-carousel-scroll flex w-full gap-3 overflow-x-auto overflow-y-hidden snap-x snap-mandatory px-4 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div
+              className="mobile-carousel-scroll flex w-full gap-3 overflow-x-auto overflow-y-hidden snap-x snap-mandatory px-4 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              data-lenis-prevent
+            >
               {packagesData.map((pkg, index) => (
                 <div
                   key={`pkg-mobile-${pkg.id ?? pkg.documentId ?? 'fallback'}-${index}`}
