@@ -1925,3 +1925,25 @@ html.home-scroll-restoring::before {
 .hide-scrollbar::-webkit-scrollbar {
   display: none; /* Chrome, Safari */
 }
+
+@keyframes inclusion-walkthrough-arrow-blink {
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.2;
+    transform: translateY(5px);
+  }
+}
+
+.inclusion-walkthrough-arrow {
+  animation: inclusion-walkthrough-arrow-blink 0.9s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inclusion-walkthrough-arrow {
+    animation: none;
+  }
+}

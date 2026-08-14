@@ -3,6 +3,7 @@ import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { useToast } from '../components/common/useToast'
 import SingleProductPageContent from '../components/package-details/SingleProductPageContent'
 import InclusionImageToast from '../components/package-details/InclusionImageToast'
+import InclusionImageWalkthrough from '../components/package-details/InclusionImageWalkthrough'
 import { usePackageById, usePackages } from '../hooks/usePackages'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
@@ -1397,7 +1398,7 @@ function DecorOptionButton({ item, wide = false, showPrice = false, onClick }) {
   )
 }
 
-function DecorTextRow({ section, onItemClick }) {
+function DecorTextRow({ section, onItemClick, showWalkthrough = false }) {
   const firstItem = Array.isArray(section.items) ? section.items[0] : ''
   const isSingleItem = section.items.length === 1
 
@@ -1416,12 +1417,13 @@ function DecorTextRow({ section, onItemClick }) {
         {section.title}
       </button>
       <div
-        className={
+        className={`${
           isSingleItem
             ? 'mt-3 w-full text-left'
             : 'mt-3 flex w-full flex-wrap items-start justify-start gap-y-2'
-        }
+        } ${showWalkthrough ? 'relative overflow-visible' : ''}`}
       >
+        {showWalkthrough ? <InclusionImageWalkthrough enabled /> : null}
         {section.items.map((item, index) => (
           <div
             key={`${section.title}-${item}`}
@@ -1481,6 +1483,8 @@ function DecorPackageSections({
 }) {
   const visibleSections = useMemo(() => filterVisibleDecorSections(sections), [sections])
   const hasInclusionSections = visibleSections.length > 0
+  const firstTextRowIndex = visibleSections.findIndex(section => section.type === 'text-row')
+  const showInclusionWalkthrough = firstTextRowIndex >= 0 && Boolean(onTextItemClick)
 
   return (
     <div className="text-left">
@@ -1493,12 +1497,18 @@ function DecorPackageSections({
       <div className={`space-y-6 text-left ${hasInclusionSections ? 'mt-5' : ''}`}>
         {visibleSections.map((section, index) => {
           if (section.type === 'text-row') {
+            const isWalkthroughAnchor = index === firstTextRowIndex
+
             return (
               <div
                 key={`${section.title}-${index}`}
                 className={index > 0 ? 'border-t border-[#E5E0D8] pt-5' : ''}
               >
-                <DecorTextRow section={section} onItemClick={onTextItemClick} />
+                <DecorTextRow
+                  section={section}
+                  onItemClick={onTextItemClick}
+                  showWalkthrough={isWalkthroughAnchor && showInclusionWalkthrough}
+                />
               </div>
             )
           }
