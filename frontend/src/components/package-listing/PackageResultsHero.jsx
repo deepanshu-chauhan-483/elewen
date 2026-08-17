@@ -65,6 +65,36 @@ const CATEGORY_ORDER = ['social', 'corporate', 'religious']
 const SERVICE_ORDER = ['decor', 'catering', 'bartending', 'sheesha']
 const LEVEL_ORDER = ['level-1', 'level-2', 'level-3', 'level-4']
 
+// Remember the last Social decor event+theme so switching to Corporate/Religious
+// and back does not restart the Social flow from the Event picker.
+const SOCIAL_DECOR_MEMORY_KEY = 'elewen:social-decor:last-selection'
+
+function readSocialDecorMemory() {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.sessionStorage.getItem(SOCIAL_DECOR_MEMORY_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return null
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+function writeSocialDecorMemory(value) {
+  if (typeof window === 'undefined') return
+  try {
+    if (value && (value.event || value.theme)) {
+      window.sessionStorage.setItem(SOCIAL_DECOR_MEMORY_KEY, JSON.stringify(value))
+    } else {
+      window.sessionStorage.removeItem(SOCIAL_DECOR_MEMORY_KEY)
+    }
+  } catch {
+    // Ignore quota / private-mode failures.
+  }
+}
+
 function formatLevelFilterLabel(slug = '', fallback = '') {
   const normalized = String(slug ?? '')
     .trim()
@@ -279,7 +309,20 @@ export default function PackageResultsHero({
   ])
 
   useEffect(() => {
-    if (!themeSlug || !isDecorService || categorySlug !== DECOR_THEME_CATEGORY_SLUG) {
+    if (!themeSlug || !isDecorService) return
+
+    // Theme is a social-only decor filter. If the URL carries a theme under
+    // Corporate/Religious (e.g. user switched Category, or landed on a shared
+    // link), strip it so the listing does not collapse to 0 packages.
+    if (categorySlug !== DECOR_THEME_CATEGORY_SLUG) {
+      setSearchParams(
+        prevParams => {
+          const nextParams = new URLSearchParams(prevParams)
+          nextParams.delete('theme')
+          return nextParams
+        },
+        { replace: true }
+      )
       return
     }
 
@@ -398,9 +441,45 @@ export default function PackageResultsHero({
       }
 
       if (key === 'category') {
+        const previousCategory = String(categorySlug || DEFAULT_EVENT_CATEGORY_SLUG)
+          .trim()
+          .toLowerCase()
+        const nextCategory = String(value).trim().toLowerCase()
+
+        // Leaving Social decor: remember event+theme so returning to Social
+        // resumes on the levels page instead of the Event picker.
+        if (
+          previousCategory === DECOR_THEME_CATEGORY_SLUG &&
+          nextCategory !== DECOR_THEME_CATEGORY_SLUG &&
+          isDecorService
+        ) {
+          writeSocialDecorMemory({
+            event: eventSlug,
+            eventId,
+            theme: themeSlug,
+          })
+        }
+
         nextParams.set('category', value)
         nextParams.delete('event')
         nextParams.delete('eventId')
+        // Theme is a social-only decor filter; it never applies to Corporate/Religious.
+        nextParams.delete('theme')
+
+        // Returning to Social decor: restore the last event+theme so the user
+        // does not have to redo the Event → Theme → Levels flow.
+        if (
+          nextCategory === DECOR_THEME_CATEGORY_SLUG &&
+          previousCategory !== DECOR_THEME_CATEGORY_SLUG &&
+          isDecorService
+        ) {
+          const memory = readSocialDecorMemory()
+          if (memory?.event) {
+            nextParams.set('event', memory.event)
+            if (memory.eventId) nextParams.set('eventId', memory.eventId)
+            if (memory.theme) nextParams.set('theme', memory.theme)
+          }
+        }
 
         setSearchParams(nextParams)
         return
@@ -462,10 +541,12 @@ export default function PackageResultsHero({
       eventSlug,
       events,
       flow,
+      isDecorService,
       navigate,
       searchParams,
       services,
       setSearchParams,
+      themeSlug,
     ]
   )
 

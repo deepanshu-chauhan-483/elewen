@@ -1,5 +1,29 @@
 # Lessons
 
+## 2026-08-17: Switching back to Social decor restarted the Event picker instead of resuming
+
+**Root cause:** Follow-up to the same-day fix above. Clearing `theme`/`event`/`eventId` on every Category switch fixed Corporate/Religious (0 packages), but it also wiped the user's Social progress. Switching Social → Corporate → Social landed on `/event-flow/event` because the event was gone, even though the user had already picked Birthday Parties + Bubbles and Black Tie.
+
+**Failure symptoms:** After browsing Social decor with an event+theme selected, switching to Corporate/Religious and back to Social sent the user to the Event picker instead of resuming on the levels page with the previous selection.
+
+**Fix details:** `PackageResultsHero` now persists the last Social decor `{event, eventId, theme}` to `sessionStorage` (`elewen:social-decor:last-selection`) when leaving Social for another category, and restores those params when switching back to Social. Corporate/Religious still clear theme (so their packages show). Direct navigation to Social without prior memory still falls through to the Event picker (existing behavior). Stale restored themes are still cleaned by the existing social stale-theme guard.
+
+**Consulted sources:** `frontend/src/components/package-listing/PackageResultsHero.jsx` category handler, `frontend/src/pages/DecorLevelsPage.jsx` redirect guards, `frontend/src/lib/serviceFlow.js` `DECOR_THEME_CATEGORY_SLUG`.
+
+**Prevention guidance:** When a filter is gated to one category and must be cleared on leaving, persist the user's prior selection in that category so returning to it resumes instead of restarting the flow. Session storage is enough for in-session resume; no need for persisted profile state.
+
+## 2026-08-17: Decor levels showed 0 packages for Corporate/Religious with a stale birthday-party theme
+
+**Root cause:** The Theme filter is social-only (the Theme pill only renders when `category === 'social'`). But the Category change handler in `PackageResultsHero` cleared `event`/`eventId` and not `theme`, so switching from Social → Corporate/Religious left `theme=birthday-party` in the URL. The stale-theme guard then early-returned for non-social categories (`categorySlug !== DECOR_THEME_CATEGORY_SLUG`), so it never stripped the theme. `filterPackages` then required packages to both belong to the Corporate/Religious category and match the birthday-party theme, which no packages do → 0 results.
+
+**Failure symptoms:** `/packages/decor-levels?category=corporate&service=decor&serviceId=150&theme=birthday-party` and the same URL with `category=religious` showed 0 packages. Worked on Social because the theme matched General Pack packages there.
+
+**Fix details:** In `PackageResultsHero.jsx`, the Category change handler now also deletes `theme`. The stale-theme `useEffect` now clears `theme` whenever the category is not social (handles direct-URL entry, back nav, shared links), then keeps the existing social stale-theme check.
+
+**Consulted sources:** `frontend/src/lib/packageFilters.js` `filterPackages`, `frontend/src/components/package-listing/PackageResultsHero.jsx`, `frontend/src/lib/serviceFlow.js` `DECOR_THEME_CATEGORY_SLUG`.
+
+**Prevention guidance:** A filter pill that is gated to one category must be cleared whenever the URL leaves that category — both in the change handler (atomic) and in a URL-sync effect (covers direct/shared-link entry). An early-return guard that skips non-social categories is wrong when the param it guards is invalid for those categories.
+
 ## 2026-08-14: Catering exclusions seeded but missing on the frontend
 
 **Root cause:** Catering exclusions were in CMS, but Strapi v5 dynamic-zone populate did not return nested repeatables unless the catering fragment used `populate: '*'`. Listing/detail queries that targeted individual nested keys (`exclusions: true` next to `menu_items: true`) came back empty. A budget_level boot sync that rewrote the zone from `populate: { packages: true }` could also drop those arrays.
