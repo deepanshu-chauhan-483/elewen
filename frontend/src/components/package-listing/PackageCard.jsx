@@ -251,7 +251,6 @@ export default function PackageCard({ pkg, className = '', compactMode = false, 
     >
       <div
         className="package-card-image-slider relative h-[280px] overflow-hidden rounded-[6px] bg-[#E8E2DA]"
-        data-lenis-prevent
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

@@ -455,9 +455,9 @@ html.home-scroll-restoring::before {
     overflow-x: visible;
   }
 
-  /* Listing card photo swipe — keep page scroll from stealing the gesture */
+  /* Listing card photo swipe — allow vertical page scroll; horizontal via JS */
   .package-card-image-slider {
-    touch-action: pan-x;
+    touch-action: pan-y;
     -webkit-user-select: none;
     user-select: none;
   }
