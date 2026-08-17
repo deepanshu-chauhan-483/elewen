@@ -11,6 +11,7 @@ import {
   verifyCashfreeWebhookSignature,
 } from '../lib/cashfree.js'
 import { createOperationalAlert } from '../lib/alerts.js'
+import { getBookingMetaFromNotes } from '../lib/dashboardData.js'
 import { notify, notifyRefund } from '../lib/notify.js'
 import { invalidateDashboardCache } from './dashboard.js'
 import {
@@ -18,6 +19,7 @@ import {
   isCodPayment,
 } from '../lib/sheeshaCheckout.js'
 import { sendBookingConfirmedEmail } from '../lib/bookingEmailService.js'
+import { firstValidIndianPhone } from '../utils/phone.js'
 
 const TEST_PAYMENT_APP_ID = process.env.CASHFREE_TEST_APP_ID || 'TEST_elewen_dashboard_bypass'
 
@@ -28,6 +30,33 @@ function isTestPaymentModeEnabled() {
     String(process.env.CASHFREE_APP_ID).toLowerCase().includes('placeholder') ||
     String(process.env.CASHFREE_SECRET_KEY).toLowerCase().includes('placeholder')
   )
+}
+
+async function resolveCashfreeCustomer(userId, notes = []) {
+  const noteMeta = getBookingMetaFromNotes(notes)
+  let profilePhone = ''
+  let profileEmail = ''
+
+  const parsedId = Number.parseInt(String(userId ?? ''), 10)
+  if (Number.isFinite(parsedId)) {
+    const [row] = await prisma.$queryRaw`
+      SELECT phone, email
+      FROM public.up_users
+      WHERE id = ${parsedId}
+      LIMIT 1
+    `
+    profilePhone = row?.phone ?? ''
+    profileEmail = row?.email ?? ''
+  }
+
+  return {
+    customerPhone: firstValidIndianPhone(
+      noteMeta.phone,
+      noteMeta.eventDayContactPhone,
+      profilePhone
+    ),
+    customerEmail: String(profileEmail || noteMeta.email || '').trim() || undefined,
+  }
 }
 
 const toNumberAmount = value => {
@@ -210,7 +239,7 @@ export const createOrder = async (req, res, next) => {
 
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
-      include: { payments: true },
+      include: { payments: true, notes: true },
     })
 
     if (!booking) return res.status(404).json({ error: 'Booking not found' })
@@ -322,11 +351,16 @@ export const createOrder = async (req, res, next) => {
     let paymentSessionId = null
 
     if (!isTestMode) {
+      const { customerPhone, customerEmail } = await resolveCashfreeCustomer(
+        userId,
+        booking.notes
+      )
       const cashfreeOrder = await createCashfreeOrder({
         orderId: providerOrderId,
         amount,
         customerId: userId,
-        customerPhone: '9999999999',
+        customerPhone,
+        customerEmail,
         returnUrl: buildCashfreeReturnUrl({ paymentId: payment.id, bookingId }),
         notifyUrl: buildCashfreeNotifyUrl(),
         note: `${paymentType} payment for booking ${bookingId}`,

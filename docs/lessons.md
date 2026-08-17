@@ -1,5 +1,17 @@
 # Lessons
 
+## 2026-08-17: Cashfree checkout prefills 9999999999 instead of customer phone
+
+**Root cause:** `createOrder` always passed `customerPhone: '9999999999'` into Cashfree order creation. The shared Cashfree helper also fell back to that dummy when phone was empty.
+
+**Failure symptoms:** Cashfree modal/UPI screen showed `9999999999` even for logged-in customers with a real profile or checkout phone.
+
+**Fix details:** Resolve phone in priority order from booking checkout/info notes (`Phone`, then event-day contact mobile), then `up_users.phone`. Normalize with `firstValidIndianPhone` / `normalizeIndianPhone`. Pass email when available. Dummy fallback in `cashfree.js` remains only if no valid Indian mobile exists.
+
+**Consulted sources:** `api/src/controllers/payment.js`, `api/src/lib/dashboardData.js` `getBookingMetaFromNotes`, `api/src/utils/phone.js`
+
+**Prevention guidance:** Never hardcode gateway customer contact fields; always resolve from checkout snapshot or account profile before calling the payment provider.
+
 ## 2026-08-17: Switching back to Social decor restarted the Event picker instead of resuming
 
 **Root cause:** Follow-up to the same-day fix above. Clearing `theme`/`event`/`eventId` on every Category switch fixed Corporate/Religious (0 packages), but it also wiped the user's Social progress. Switching Social → Corporate → Social landed on `/event-flow/event` because the event was gone, even though the user had already picked Birthday Parties + Bubbles and Black Tie.

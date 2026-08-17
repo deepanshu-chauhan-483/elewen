@@ -15,3 +15,16 @@ export function isValidIndianPhone(value) {
   const normalized = normalizeIndianPhone(value)
   return normalized === '' || /^[6-9]\d{9}$/.test(normalized)
 }
+
+const DUMMY_INDIAN_PHONES = new Set(['9999999999'])
+
+/** First candidate that is a valid 10-digit Indian mobile, or ''. */
+export function firstValidIndianPhone(...candidates) {
+  for (const candidate of candidates) {
+    const phone = normalizeIndianPhone(candidate)
+    if (!/^[6-9]\d{9}$/.test(phone)) continue
+    if (DUMMY_INDIAN_PHONES.has(phone)) continue
+    return phone
+  }
+  return ''
+}
