@@ -149,10 +149,10 @@ export default function ConsultationsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl text-[#1C1C1C]">Consultations</h1>
-        <p className="mt-2 max-w-2xl text-sm text-[#8F8F8F]">
+        {/* <p className="mt-2 max-w-2xl text-sm text-[#8F8F8F]">
           Customers who booked a consultation call. Package interest is shown when they started from
           a corporate decor package page.
-        </p>
+        </p> */}
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
