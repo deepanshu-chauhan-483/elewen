@@ -3,7 +3,7 @@ export const CATERING_LEVEL_DESCRIPTIONS = {
   'level-1':
     'This level caters to people who want good quality food with classic dishes but dont need waiters, cutlery etc. Sea food is not included in this category of menu',
   'level-2':
-    'This level caters to people who want good quality food with classic dishes and need waiters to SERVE. Sea food and DINING cutlery not included in this category of menu',
+    'This level caters to people who want good quality food with classic dishes and need waiters to serve. Sea food and dining cutlery not included in this category of menu',
   'level-3':
     'Trained chefs, better ingridents, add on services, better presentation style, overall enhanced experience, live stations',
 }
