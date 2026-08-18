@@ -131,7 +131,7 @@ export default function ContactUsPage() {
                     </a>
 
                     <a
-                      href="tel:+917652872986"
+                      href="tel:+919810937700"
                       className="flex items-center transition-opacity hover:opacity-100"
                     >
                       <span className="flex h-7 w-7 items-center justify-start text-white">
@@ -149,7 +149,7 @@ export default function ContactUsPage() {
                           />
                         </svg>
                       </span>
-                      <span>+91 7652872986</span>
+                      <span>+91 9810937700</span>
                     </a>
                   </div>
 
