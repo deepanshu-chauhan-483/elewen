@@ -1,7 +1,7 @@
 import prisma from '../lib/prisma.js'
 import { computeCartItemsWithDeliveryCharges } from '../lib/deliveryChargePricing.js'
 import { strapiGet, strapiServerGet, strapiServerPost, strapiAdminPut } from '../lib/strapi.js'
-import { notify, notifyRefund } from '../lib/notify.js'
+import { notify, notifyAdminBookingCancelled, notifyRefund } from '../lib/notify.js'
 import { resolveAppliedCoupon } from '../lib/coupons.js'
 import {
   enrichBookings,
@@ -883,6 +883,10 @@ export const cancelBooking = async (req, res, next) => {
       emailTemplate: 'booking_cancelled',
       emailData: { bookingId: id, reason },
     }).catch(() => {})
+
+    notifyAdminBookingCancelled(id).catch(err =>
+      console.error('[notify] admin cancel email failed', id, err?.message)
+    )
 
     if (refundEntries.length > 0) {
       const totalRefund = refundEntries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0)

@@ -1,5 +1,17 @@
 import prisma from './prisma.js'
-import { sendAdminEmails, sendEmail, templates } from './email.js'
+import {
+  formatBookingShortId,
+  formatDurationBetween,
+  formatEventDateLabel,
+  formatEventTimeLabel,
+  formatIstTimestamp,
+  sendAdminEmails,
+  sendEmail,
+  templates,
+} from './email.js'
+
+const ADMIN_NEW_BOOKING_EMAIL = 'admin_new_booking_advance'
+const ADMIN_CANCEL_EMAIL = 'admin_booking_cancelled'
 
 const STRAPI_URL = process.env.STRAPI_URL || 'http://localhost:1337'
 
@@ -119,6 +131,112 @@ export const notifyRefund = async (
         })
       )
     }
+  }
+}
+
+async function loadCustomerProfile(userId) {
+  const parsedId = Number.parseInt(String(userId ?? ''), 10)
+  if (!Number.isFinite(parsedId)) return { name: '', phone: '', email: '' }
+
+  const [row] = await prisma.$queryRaw`
+    SELECT email, first_name, last_name, phone
+    FROM public.up_users
+    WHERE id = ${parsedId}
+    LIMIT 1
+  `
+
+  const name = [row?.first_name, row?.last_name].filter(Boolean).join(' ').trim()
+  return {
+    name,
+    phone: String(row?.phone ?? '').trim(),
+    email: String(row?.email ?? '').trim(),
+  }
+}
+
+function packageNameFromItems(items) {
+  const titles = [...new Set((items ?? []).map(item => String(item?.title ?? '').trim()).filter(Boolean))]
+  return titles.join(', ')
+}
+
+async function claimAdminEmail(bookingId, emailType, subject) {
+  try {
+    await prisma.bookingEmailLog.create({
+      data: { bookingId, emailType, subject },
+    })
+    return true
+  } catch (err) {
+    if (err?.code === 'P2002') return false
+    throw err
+  }
+}
+
+async function loadAdminBookingMail(bookingId) {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { items: { select: { title: true } } },
+  })
+  if (!booking) return null
+
+  const customer = await loadCustomerProfile(booking.userId)
+  return {
+    booking,
+    packageName: packageNameFromItems(booking.items) || 'Package booking',
+    eventDate: formatEventDateLabel(booking.eventDate),
+    eventTime: formatEventTimeLabel(booking.eventTime),
+    guestCount: booking.guestCount == null ? '' : String(booking.guestCount),
+    bookingId: formatBookingShortId(booking.id),
+    customerName: customer.name,
+    phone: customer.phone,
+    email: customer.email,
+  }
+}
+
+/** Admin mail after successful advance payment. Safe to call twice — sent once per booking. */
+export async function notifyAdminAdvancePaid(bookingId) {
+  try {
+    if (!bookingId) return { sent: false, reason: 'missing_booking' }
+    const payload = await loadAdminBookingMail(bookingId)
+    if (!payload || !templates.booking_received_admin) {
+      return { sent: false, reason: 'missing_booking' }
+    }
+
+    const subject = `New booking received — ${payload.bookingId}`
+    const claimed = await claimAdminEmail(bookingId, ADMIN_NEW_BOOKING_EMAIL, subject)
+    if (!claimed) return { sent: false, reason: 'already_sent' }
+
+    return sendAdminEmails(subject, templates.booking_received_admin(payload))
+  } catch (err) {
+    console.error('[notify] admin new booking email failed', bookingId, err?.message)
+    return { sent: false, reason: 'error' }
+  }
+}
+
+/** Admin mail when a customer cancels. Safe to call twice — sent once per booking. */
+export async function notifyAdminBookingCancelled(bookingId, cancelledAt = new Date()) {
+  try {
+    if (!bookingId) return { sent: false, reason: 'missing_booking' }
+    const payload = await loadAdminBookingMail(bookingId)
+    if (!payload || !templates.booking_cancelled_admin) {
+      return { sent: false, reason: 'missing_booking' }
+    }
+
+    const subject = `Booking cancelled — ${payload.bookingId}`
+    const claimed = await claimAdminEmail(bookingId, ADMIN_CANCEL_EMAIL, subject)
+    if (!claimed) return { sent: false, reason: 'already_sent' }
+
+    const cancelledDate = cancelledAt instanceof Date ? cancelledAt : new Date(cancelledAt)
+    return sendAdminEmails(
+      subject,
+      templates.booking_cancelled_admin({
+        ...payload,
+        bookedAt: formatIstTimestamp(payload.booking.createdAt),
+        cancelledAt: formatIstTimestamp(cancelledDate),
+        durationLabel: formatDurationBetween(payload.booking.createdAt, cancelledDate),
+      })
+    )
+  } catch (err) {
+    console.error('[notify] admin cancel email failed', bookingId, err?.message)
+    return { sent: false, reason: 'error' }
   }
 }
 

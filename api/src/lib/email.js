@@ -99,6 +99,78 @@ const ctaBtn = (text, url) => `
     </tr>
   </table>`
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+function displayOrDash(value) {
+  const text = String(value ?? '').trim()
+  return text ? escapeHtml(text) : '—'
+}
+
+const IST = 'Asia/Kolkata'
+
+export function formatEventDateLabel(value) {
+  if (!value) return '—'
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  return date.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: IST,
+  })
+}
+
+export function formatEventTimeLabel(value) {
+  const raw = String(value ?? '').trim()
+  if (!raw) return '—'
+  const match = raw.match(/^(\d{1,2}):(\d{2})/)
+  if (!match) return raw
+  const hour = Number(match[1])
+  const minute = match[2]
+  if (!Number.isFinite(hour) || hour > 23) return raw
+  const suffix = hour >= 12 ? 'PM' : 'AM'
+  const hour12 = hour % 12 || 12
+  return `${hour12}:${minute} ${suffix}`
+}
+
+export function formatIstTimestamp(value) {
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: IST,
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).formatToParts(date)
+  const read = type => parts.find(part => part.type === type)?.value ?? ''
+  const dayPeriod = String(read('dayPeriod') || '').toUpperCase()
+  return `${read('day')} ${read('month')}, ${read('hour')}:${read('minute')} ${dayPeriod}`.trim()
+}
+
+export function formatDurationBetween(startValue, endValue) {
+  const start = startValue instanceof Date ? startValue : new Date(startValue)
+  const end = endValue instanceof Date ? endValue : new Date(endValue)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return '—'
+  const totalMinutes = Math.max(0, Math.floor((end.getTime() - start.getTime()) / 60000))
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  if (hours === 0) return `${minutes} minute${minutes === 1 ? '' : 's'}`
+  if (minutes === 0) return `${hours} hour${hours === 1 ? '' : 's'}`
+  return `${hours} hour${hours === 1 ? '' : 's'} ${minutes} minute${minutes === 1 ? '' : 's'}`
+}
+
+export function formatBookingShortId(bookingId) {
+  return `#${String(bookingId ?? '').slice(0, 8).toUpperCase()}`
+}
+
 const HOOKAH_JOURNEY_SECTIONS = [
   {
     title: 'Booking',
@@ -385,6 +457,83 @@ export const templates = {
       `)}
       ${divider()}
       ${p('If you believe this is an error or need assistance, please contact our support team.')}
+    `
+    ),
+
+  booking_received_admin: ({
+    packageName,
+    eventDate,
+    eventTime,
+    guestCount,
+    bookingId,
+    customerName,
+    phone,
+    email,
+  }) =>
+    layout(
+      'New Booking — Elewen',
+      `
+      ${p('Hi Team,')}
+      ${p('A new booking has been received.')}
+      ${p('<strong style="color:#fff;">Booking Details</strong>')}
+      ${infoTable(`
+        ${infoRow('Package', displayOrDash(packageName))}
+        ${infoRow('Event Date', displayOrDash(eventDate))}
+        ${infoRow('Event Time', displayOrDash(eventTime))}
+        ${infoRow('Number of Guests', displayOrDash(guestCount))}
+        ${infoRow('Booking ID', displayOrDash(bookingId))}
+      `)}
+      ${p('<strong style="color:#fff;">Customer Details</strong>')}
+      ${infoTable(`
+        ${infoRow('Name', displayOrDash(customerName))}
+        ${infoRow('Phone', displayOrDash(phone))}
+        ${infoRow('Email', displayOrDash(email))}
+      `)}
+      ${p('Action Required: Please review the booking and Accept or Reject it.')}
+      ${p('Thanks')}
+    `
+    ),
+
+  booking_cancelled_admin: ({
+    packageName,
+    eventDate,
+    eventTime,
+    guestCount,
+    bookingId,
+    customerName,
+    phone,
+    email,
+    bookedAt,
+    cancelledAt,
+    durationLabel,
+  }) =>
+    layout(
+      'Booking Cancelled — Elewen',
+      `
+      ${p('Hi Team,')}
+      ${p('A customer has cancelled their booking.')}
+      ${p('<strong style="color:#fff;">Booking Details</strong>')}
+      ${infoTable(`
+        ${infoRow('Booking ID', displayOrDash(bookingId))}
+        ${infoRow('Package', displayOrDash(packageName))}
+        ${infoRow('Event Date', displayOrDash(eventDate))}
+        ${infoRow('Event Time', displayOrDash(eventTime))}
+        ${infoRow('Number of Guests', displayOrDash(guestCount))}
+      `)}
+      ${p('<strong style="color:#fff;">Customer Details</strong>')}
+      ${infoTable(`
+        ${infoRow('Name', displayOrDash(customerName))}
+        ${infoRow('Phone', displayOrDash(phone))}
+        ${infoRow('Email', displayOrDash(email))}
+      `)}
+      ${p('<strong style="color:#fff;">Cancellation Details</strong>')}
+      ${infoTable(`
+        ${infoRow('Booking Date &amp; Time', displayOrDash(bookedAt))}
+        ${infoRow('Cancellation Date &amp; Time', displayOrDash(cancelledAt))}
+        ${infoRow('Time Between Booking &amp; Cancellation', displayOrDash(durationLabel))}
+      `)}
+      ${p('Action Required: Please update the booking status accordingly.')}
+      ${p('Thanks')}
     `
     ),
 

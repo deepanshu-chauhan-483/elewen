@@ -12,7 +12,7 @@ import {
 } from '../lib/cashfree.js'
 import { createOperationalAlert } from '../lib/alerts.js'
 import { getBookingMetaFromNotes } from '../lib/dashboardData.js'
-import { notify, notifyRefund } from '../lib/notify.js'
+import { notify, notifyAdminAdvancePaid, notifyRefund } from '../lib/notify.js'
 import { invalidateDashboardCache } from './dashboard.js'
 import {
   classifyCartItems,
@@ -436,6 +436,11 @@ export const verifyPayment = async (req, res, next) => {
         userId,
         'Confirmed on re-verify after full payment (webhook may have set payment success first)'
       )
+      if (payment.paymentType === 'advance') {
+        notifyAdminAdvancePaid(payment.bookingId).catch(err =>
+          console.error('[notify] admin new booking email failed', payment.bookingId, err?.message)
+        )
+      }
       return res.json({ message: 'Payment already verified', payment, booking })
     }
     if (payment.providerOrderId !== resolvedGatewayOrderId) {
@@ -552,6 +557,12 @@ export const verifyPayment = async (req, res, next) => {
       },
     }).catch(() => {})
 
+    if (payment.paymentType === 'advance') {
+      notifyAdminAdvancePaid(payment.bookingId).catch(err =>
+        console.error('[notify] admin new booking email failed', payment.bookingId, err?.message)
+      )
+    }
+
     await clearUserCart(payment.booking.userId).catch(() => {})
     await invalidateDashboardCache(payment.booking.userId).catch(() => {})
 
@@ -637,6 +648,9 @@ export const handleWebhook = async (req, res) => {
                 paymentType: payment.paymentType,
               },
             }).catch(() => {})
+            notifyAdminAdvancePaid(payment.bookingId).catch(err =>
+              console.error('[notify] admin new booking email failed', payment.bookingId, err?.message)
+            )
           }
 
           if (payment.paymentType === 'full') {
