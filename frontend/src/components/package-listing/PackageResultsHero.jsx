@@ -284,7 +284,7 @@ export default function PackageResultsHero({
   const themes = useMemo(() => {
     if (!isDecorService) return []
 
-    const scopedThemes = filterDecorThemesBySocialEvent(allThemes, eventSlug)
+    const scopedThemes = filterDecorThemesBySocialEvent(allThemes, eventSlug, packages)
     const packageBackedThemes = filterThemesByEventPackages(scopedThemes, packages, {
       categorySlug: categorySlug || DEFAULT_EVENT_CATEGORY_SLUG,
       eventSlug,

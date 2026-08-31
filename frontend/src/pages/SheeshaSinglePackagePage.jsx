@@ -30,56 +30,8 @@ const SHEESHA_OPERATOR_POLICY_LINE =
 const SHEESHA_DEFAULT_POLICIES_BODY =
   'All the material used is on rent and shall be picked up after the event. The cost given above is for one event only.'
 
-const SHEESHA_PRICE_COVERS_BODY =
-  '✔ Hookah\t✔ Hookah Operator\t✔ Coal\t✔ Flavor\tPremium hookah base\tStem & tray\tHose / pipe\tMouth tips (disposable)\tTongs\nNo hidden service fees.'
-
-const SHEESHA_SETUP_NEEDS_BODY =
-  'A small area for our team to work, access to water and electricity and gas.'
-
-const SHEESHA_CONTENT = {
-  title: 'Basic Indian Hookah',
-  price: '₹1850.00',
-  intro:
-    'A classic Indian hookah experience with premium flavors and full service setup for your event.',
-  accordionSections: [
-    {
-      title: 'The price you see covers it all',
-      body: SHEESHA_PRICE_COVERS_BODY,
-    },
-    {
-      title: 'Setup needs',
-      body: SHEESHA_SETUP_NEEDS_BODY,
-    },
-    {
-      title: 'Policies',
-      body: `${SHEESHA_OPERATOR_POLICY_LINE}\n\n${SHEESHA_DEFAULT_POLICIES_BODY}`,
-    },
-    {
-      title: 'Cancellation Policy',
-      body: 'Cancellation terms apply based on timing.',
-    },
-  ],
-}
-
-const SHEESHA_FLAVOR_DESCRIPTION_FALLBACKS = {
-  commissioner: 'Bold classic blend with a smooth finish.',
-  seabridge: 'Cool ocean freshness with subtle sweetness.',
-  'dubai special': 'Rich Middle Eastern mix, sweet and smooth.',
-  'pan kiwi mint': 'Tangy kiwi layered with paan mint.',
-  'paan mint cigar': 'Strong paan flavor with cool mint.',
-  'brain freezer': 'Intense icy mint for extreme cooling.',
-  apple: 'Crisp sweet apple with smooth smoke.',
-  watermelon: 'Juicy watermelon with light refreshing sweetness.',
-  'love 66':
-    'Our house blend of honeydew melon, watermelon, passionfruit, and mint.',
-  'lady killer': 'A refreshing mix of melon, mango, berries, and mint.',
-  'blue melon': 'A sweet combo of blueberry and melon.',
-  'mango tango icy': 'Intense mango with an icy menthol blast.',
-  'berlin nights': 'A popular peach-based blend.',
-  'hurrem sultan': 'A unique, aromatic blend.',
-  'double apple': 'A classic apple flavor with warm spice notes.',
-  'turkish mastic': 'A sweet and earthy resin flavor.',
-  mint: 'Cooling and refreshing.',
+function getSheeshaFlavorDescription(flavor) {
+  return String(flavor?.description ?? '').trim()
 }
 
 function ensureSheeshaPoliciesSection(sections) {
@@ -99,12 +51,9 @@ function ensureSheeshaPoliciesSection(sections) {
 }
 
 function buildSheeshaAccordionSections(pkg) {
-  const sections =
-    Array.isArray(pkg?.detail_accordion_sections) && pkg.detail_accordion_sections.length
-      ? pkg.detail_accordion_sections
-      : SHEESHA_CONTENT.accordionSections
-
-  return ensureSheeshaPoliciesSection(sections)
+  return ensureSheeshaPoliciesSection(
+    Array.isArray(pkg?.detail_accordion_sections) ? pkg.detail_accordion_sections : []
+  )
 }
 
 function mergeAccordionSections(baseSections, cancellationPolicy, fallbackCancellationSection) {
@@ -130,15 +79,7 @@ function buildSheeshaFlavors(pkg) {
 }
 
 function buildSheeshaInclusions(pkg) {
-  return Array.isArray(pkg?.detail_inclusions) && pkg.detail_inclusions.length
-    ? pkg.detail_inclusions
-    : [
-        '1 staff/Hookah operator',
-        'One Hookah Pot',
-        'Unlimited Flavour Change of chosen flavor',
-        'Unlimited Coal Change',
-        'Full Hookah Equipment kit',
-      ]
+  return Array.isArray(pkg?.detail_inclusions) ? pkg.detail_inclusions : []
 }
 
 function normalizeSelectedOptions(selectedOptions = {}) {
@@ -179,16 +120,6 @@ function normalisePackageId(value = '') {
 
 function buildPackageId(pkg) {
   return normalisePackageId(pkg.documentId ?? pkg.id ?? pkg.title)
-}
-
-function getSheeshaFlavorDescription(flavor) {
-  const strapiDescription = String(flavor?.description ?? '').trim()
-  if (strapiDescription) return strapiDescription
-
-  const normalizedTitle = String(flavor?.title ?? '')
-    .trim()
-    .toLowerCase()
-  return SHEESHA_FLAVOR_DESCRIPTION_FALLBACKS[normalizedTitle] ?? ''
 }
 
 function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors, inclusions }) {
@@ -233,7 +164,7 @@ function SheeshaCustomContent({ selectedFlavor, onSelectFlavor, flavors, inclusi
                 key={`${flavor.title}-${index}`}
                 className="relative flex w-full items-start gap-3 cursor-pointer md:w-fit"
               >
-                <input
+                <input  
                   type="radio"
                   name="flavor"
                   checked={selectedFlavor === flavor.title}
@@ -454,16 +385,16 @@ function SheeshaSinglePackagePageBody() {
   const sideImages = Array.from({ length: 5 }).map((_, i) => source[i % source.length])
 
   const selectedFlavor = activeCustomization?.data?.selectedFlavor ?? null
-  const packageTitle = pkg.title || SHEESHA_CONTENT.title
-  const packagePrice = pkg.price || SHEESHA_CONTENT.price
+  const packageTitle = pkg.title || ''
+  const packagePrice = pkg.price || ''
   const packageOriginalPrice = pkg.compare_at_price || ''
   const packageDiscountBadge = pkg.discount_badge || ''
   const packageSizeLabel = pkg.sheesha_size_label ?? ''
-  const packageIntro = pkg.description || SHEESHA_CONTENT.intro
+  const packageIntro = pkg.description || ''
   const accordionSections = mergeAccordionSections(
     buildSheeshaAccordionSections(pkg),
     cancellationPolicy,
-    SHEESHA_CONTENT.accordionSections.find(section => section.title === 'Cancellation Policy')
+    null
   )
   const packageFlavorsList = buildSheeshaFlavors(pkg)
   const flavors = packageFlavorsList.length ? packageFlavorsList : packageFlavors

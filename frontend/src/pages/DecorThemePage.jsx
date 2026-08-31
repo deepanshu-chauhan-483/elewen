@@ -9,7 +9,6 @@ import CmsPageLoader from '../components/common/CmsPageLoader'
 import BrandedImage from '../components/common/BrandedImage'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { filterDecorThemesBySocialEvent, filterThemesByEventPackages } from '../lib/packageFilters'
-import { HOUSE_PARTY_THEME_PREVIEW } from '../lib/housePartyPackageMedia'
 import {
   buildServiceSelectionBackTo,
   DECOR_THEME_CATEGORY_SLUG,
@@ -42,8 +41,6 @@ const OFFLINE_THEME_PREVIEW_BY_SLUG = {
   disco: themeImg3,
   floral: themeImg2,
   retro: themeImg4,
-  'house-party': HOUSE_PARTY_THEME_PREVIEW,
-  'house-parties': HOUSE_PARTY_THEME_PREVIEW,
 }
 const DESKTOP_CARDS_PER_PAGE = 4
 const MOBILE_CARDS_PER_PAGE = 1
@@ -197,7 +194,7 @@ export default function DecorThemePage() {
   )
 
   const eventScopedThemes = useMemo(() => {
-    const byEvent = filterDecorThemesBySocialEvent(themesWithImages, eventId)
+    const byEvent = filterDecorThemesBySocialEvent(themesWithImages, eventId, packages)
 
     return filterThemesByEventPackages(byEvent, packages, {
       categorySlug: categoryId || DEFAULT_EVENT_CATEGORY_SLUG,

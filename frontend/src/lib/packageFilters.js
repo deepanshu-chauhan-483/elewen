@@ -21,39 +21,6 @@ const normalizeThemeSlug = value =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 
-/**
- * Catering listing — official catalog (Level from catering_level tier, budget_level fallback).
- * Keep seed slugs + client-renamed slugs so CMS title/slug edits still list.
- */
-const CATERING_ALLOWED_SLUGS = new Set([
-  'close-circle-catering-1',
-  'close-circle-catering-2',
-  'close-circle-catering-3',
-  'smart-serve-1',
-  'smart-serve',
-  'chefs-selection',
-  'chef-s-selection',
-  'chefs-choice',
-  'chef-s-choice',
-  'chef-choice',
-  'easy-hosting-simply-served-1',
-  'easy-hosting-simply-served-2',
-  'easy-hosting',
-  'easy-hosting-1',
-  'simply-served',
-  'simply-served-1',
-  'easy-hosting-2',
-  'effortless-hosting',
-  'signature-hosting-package',
-  'signature-hosting',
-  'signature-hosting-2',
-  'the-full-table-experience',
-  'the-social-experience',
-  'the-grand-experience',
-  'the-social-starters',
-  'purely-satvik',
-])
-
 /** Client-renamed slugs → canonical seed slug (menus / fallbacks). */
 export const CATERING_SLUG_ALIASES = {
   'smart-serve-1': 'close-circle-catering-2',
@@ -75,300 +42,6 @@ export function resolveCateringCatalogSlug(slug) {
   const key = normalizeValue(slug)
   if (!key) return ''
   return CATERING_SLUG_ALIASES[key] || key
-}
-
-/** Packages with a real catering_level enum are catalog packages (even after rename). */
-const CATERING_LEVEL_KEYS = new Set(['essentials', 'assisted', 'end_to_end', 'end-to-end'])
-
-/**
- * Bartending listing — Classic Pour, Signature Mix, House Special.
- * Exclusive sheet rows are add-ons only. Excludes Paint & Prosecco.
- */
-const BARTENDING_ALLOWED_SLUGS = new Set([
-  'classic-pour',
-  'signature-mix',
-  'the-house-special-premium-bartending-service',
-  'house-special',
-])
-
-/**
- * Rental furniture listing — exact catalog only.
- * Accept common slug/title variants for 2.0 / spacing drift in CMS.
- */
-const FURNITURE_ALLOWED_SLUGS = new Set([
-  'the-sit-down-dinner',
-  'the-sit-down-dinner-2-0',
-  'the-sit-down-dinner-2-0-round-tables',
-  'the-sit-down-dinner-20-round-tables',
-  'the-mix-and-mingle',
-  'the-mix-and-mingle-2',
-  'the-mix-and-mingle2',
-  'the-estate-party-pack',
-  'the-puja-celebration',
-  'mehndi-on-my-mind',
-  'mehndi-on-my-mind-2-0',
-  'mehndi-on-my-mind-20',
-  'the-low-lounge-social',
-  'the-low-lounge-social-2-0',
-  'the-low-lounge-social2-0',
-  'the-low-lounge-social-20',
-])
-
-/** General Pack decor — exact Excel catalog (~22 packages). */
-const GENERAL_PACK_ALLOWED_SLUGS = new Set([
-  'phool-proof-1',
-  'phool-proof-2',
-  'air-we-go-1',
-  'air-we-go-2',
-  'air-we-go-2-3',
-  'air-we-go-3',
-  'raise-the-bar-1',
-  'raise-the-bar-1b',
-  'raise-the-bar-2',
-  'raise-the-bar-2-3',
-  'raise-the-bar-3',
-  'just-enough-magic-1',
-  'just-enough-magic-2',
-  'just-enough-magic-3',
-  'party-smart-1',
-  'party-smart-2',
-  'party-smart-2-3',
-  'party-smart-3',
-  'party-smart-social-2',
-  'party-smart-social-3',
-  'entry-setup-aarambh-1',
-  'aura-upgrade-1',
-])
-
-/** Bubbles & Black Tie decor — exact catalog (9 packages). */
-const BUBBLES_BLACK_TIE_ALLOWED_SLUGS = new Set([
-  'golden-touch-1',
-  'golden-touch-2',
-  'golden-touch-2-3',
-  'golden-touch-3',
-  'social-setup-1',
-  'social-setup-2',
-  'social-setup-2-3',
-  'social-setup-3',
-  'complete-package-bubbles-black-tie',
-])
-
-/** House Party decor — exact catalog only (Phool-Proof, Soft Glow Szn, Hosting Hero, Entertainment Kit). */
-const HOUSE_PARTY_ALLOWED_SLUGS = new Set([
-  'hp-phool-proof-1',
-  'hp-phool-proof-2',
-  'soft-glow-szn-1',
-  'soft-glow-szn-2',
-  'soft-glow-szn-3',
-  'hosting-hero-essentials',
-  'entertainment-kit',
-])
-
-const FURNITURE_ALLOWED_TITLE_KEYS = new Set([
-  'the-sit-down-dinner',
-  'the-sit-down-dinner-2-0',
-  'the-sit-down-dinner-2-0-round-tables',
-  'the-sit-down-dinner-20-round-tables',
-  'the-mix-and-mingle',
-  'the-mix-and-mingle-2',
-  'the-mix-and-mingle2',
-  'the-estate-party-pack',
-  'the-puja-celebration',
-  'mehndi-on-my-mind',
-  'mehndi-on-my-mind-2-0',
-  'mehndi-on-my-mind-20',
-  'the-low-lounge-social',
-  'the-low-lounge-social-2-0',
-  'the-low-lounge-social2-0',
-  'the-low-lounge-social-20',
-])
-
-function isAllowedFurniturePackage(pkg) {
-  const slug = normalizeValue(pkg?.slug)
-  if (slug && FURNITURE_ALLOWED_SLUGS.has(slug)) return true
-
-  const titleKey = normalizeLevelSlug(pkg?.title)
-  if (titleKey && FURNITURE_ALLOWED_TITLE_KEYS.has(titleKey)) return true
-
-  // Flexible match when CMS title has extra punctuation / spacing.
-  if (!titleKey && !slug) return false
-  const key = titleKey || normalizeLevelSlug(slug)
-  return (
-    key.startsWith('the-sit-down-dinner') ||
-    key.startsWith('the-mix-and-mingle') ||
-    key === 'the-estate-party-pack' ||
-    key === 'the-puja-celebration' ||
-    key.startsWith('mehndi-on-my-mind') ||
-    key.startsWith('the-low-lounge-social')
-  )
-}
-
-/**
- * Corporate event listings with a fixed decor catalog (blocks F&B bleed).
- * Keys are canonical event slugs; values are allowed package slugs + title keys.
- */
-const CORPORATE_EVENT_PACKAGE_ALLOWLISTS = {
-  'exhibition-stalls': {
-    // CMS keeps "Upgarde"; accept Upgrade as an alias.
-    slugs: [
-      'exhibition-essentials-1',
-      'exhibition-essentials-2',
-      'exhibition-essentials-3',
-      'stall-upgarde-1',
-      'stall-upgarde-2',
-      'stall-upgarde-3',
-      'stall-upgrade-1',
-      'stall-upgrade-2',
-      'stall-upgrade-3',
-    ],
-    titles: [
-      'exhibition-essentials-1',
-      'exhibition-essentials-2',
-      'exhibition-essentials-3',
-      'stall-upgarde-1',
-      'stall-upgarde-2',
-      'stall-upgarde-3',
-      'stall-upgrade-1',
-      'stall-upgrade-2',
-      'stall-upgrade-3',
-    ],
-  },
-  'seminar-conference': {
-    // CMS: Branding & Visibility 1 → branding-and-visibility; Registeration typo kept.
-    slugs: [
-      'simply-elevated-1',
-      'simply-elevated-2',
-      'simply-elevated-3',
-      'av-and-tech-basics-1',
-      'av-and-tech-essential-kit-2',
-      'av-and-tech-essential-kit-pro-3',
-      'stage-setup-2',
-      'stage-setup-3',
-      'registeration-and-guest-experience-2',
-      'registration-and-guest-experience-2',
-      'branding-and-visibility',
-      'branding-and-visibility-1',
-      'branding-and-visibility-2',
-    ],
-    titles: [
-      'simply-elevated-1',
-      'simply-elevated-2',
-      'simply-elevated-3',
-      'av-and-tech-basics-1',
-      'av-and-tech-essential-kit-2',
-      'av-and-tech-essential-kit-pro-3',
-      'stage-setup-2',
-      'stage-setup-3',
-      'registeration-and-guest-experience-2',
-      'registration-and-guest-experience-2',
-      'branding-and-visibility',
-      'branding-and-visibility-1',
-      'branding-and-visibility-2',
-    ],
-  },
-}
-
-const ALL_CORPORATE_PACKAGE_SLUGS = new Set(
-  Object.values(CORPORATE_EVENT_PACKAGE_ALLOWLISTS).flatMap(entry => entry.slugs)
-)
-
-const ALL_CORPORATE_PACKAGE_TITLE_KEYS = new Set(
-  Object.values(CORPORATE_EVENT_PACKAGE_ALLOWLISTS).flatMap(entry => entry.titles)
-)
-
-/** Exhibition / seminar decor packages — consultation-only, hidden from generic search. */
-export function isCorporateDecorPackage(pkg) {
-  if (!pkg) return false
-
-  const slug = normalizeValue(pkg?.slug)
-  if (slug && ALL_CORPORATE_PACKAGE_SLUGS.has(slug)) return true
-
-  const titleKey = normalizeLevelSlug(pkg?.title)
-  return Boolean(titleKey && ALL_CORPORATE_PACKAGE_TITLE_KEYS.has(titleKey))
-}
-
-function getCorporateEventPackageAllowlist(eventSlug = '') {
-  const canonical = canonicalizeEventSlug(eventSlug)
-  if (!canonical) return null
-
-  const entry = CORPORATE_EVENT_PACKAGE_ALLOWLISTS[canonical]
-  if (!entry) return null
-
-  return {
-    slugs: new Set(entry.slugs),
-    titles: new Set(entry.titles),
-  }
-}
-
-function isAllowedCorporateEventPackage(pkg, allowlist) {
-  if (!allowlist) return true
-
-  const slug = normalizeValue(pkg?.slug)
-  if (slug && allowlist.slugs.has(slug)) return true
-
-  const titleKey = normalizeLevelSlug(pkg?.title)
-  return Boolean(titleKey && allowlist.titles.has(titleKey))
-}
-
-function isAllowedCateringPackage(pkg) {
-  const slug = normalizeValue(pkg?.slug)
-  const catalogSlug = resolveCateringCatalogSlug(slug)
-  if (slug && (CATERING_ALLOWED_SLUGS.has(slug) || CATERING_ALLOWED_SLUGS.has(catalogSlug))) {
-    return true
-  }
-
-  const titleKey = normalizeLevelSlug(pkg?.title)
-  if (titleKey && CATERING_ALLOWED_SLUGS.has(titleKey)) return true
-  if (titleKey && CATERING_SLUG_ALIASES[titleKey]) return true
-  if (
-    titleKey.includes('smart-serve') ||
-    titleKey.includes('easy-hosting') ||
-    titleKey.includes('simply-served') ||
-    titleKey.includes('chefs-selection') ||
-    titleKey.includes('chef-s-selection') ||
-    titleKey.includes('chefs-choice') ||
-    titleKey.includes('chef-s-choice') ||
-    titleKey.includes('chef-choice') ||
-    titleKey.includes('signature-hosting') ||
-    titleKey.includes('close-circle-catering')
-  ) {
-    return true
-  }
-
-  const cateringLevel = normalizeValue(pkg?.catering_level).replace(/\s+/g, '_')
-  return CATERING_LEVEL_KEYS.has(cateringLevel)
-}
-
-function isAllowedBartendingPackage(pkg) {
-  const slug = normalizeValue(pkg?.slug)
-  if (slug === 'exclusive-package' || slug === 'paint-and-prosecco-night') return false
-  if (slug && BARTENDING_ALLOWED_SLUGS.has(slug)) return true
-
-  const titleKey = normalizeLevelSlug(pkg?.title)
-  if (titleKey.includes('paint-and-prosecco')) return false
-  // "Exclusive Package" listing card is not shown; add-ons live on package detail.
-  if (titleKey === 'exclusive-package') return false
-  if (
-    titleKey.includes('classic-pour') ||
-    titleKey.includes('house-special') ||
-    titleKey.includes('signature-mix')
-  ) {
-    return true
-  }
-
-  const bartenderType = normalizeLevelSlug(pkg?.bartender_type)
-  if (
-    bartenderType === 'classic-pour' ||
-    bartenderType === 'signature-mix' ||
-    bartenderType === 'house-special' ||
-    bartenderType.includes('signature-mix') ||
-    bartenderType.includes('classic-pour') ||
-    bartenderType.includes('house-special')
-  ) {
-    return true
-  }
-
-  return false
 }
 
 /** Listing Level 1/2/3: catering tier first (essentials/assisted/end_to_end), then budget_level. */
@@ -676,6 +349,16 @@ export function eventSlugsMatch(left, right) {
   return Boolean(aToken && aToken === bToken)
 }
 
+const CORPORATE_CONSULTATION_EVENT_SLUGS = new Set(['exhibition-stalls', 'seminar-conference'])
+
+/** Corporate exhibition / seminar decor — derived from CMS event links, not slug lists. */
+export function isCorporateDecorPackage(pkg) {
+  if (!pkg) return false
+
+  const eventSlugs = Array.isArray(pkg.event_slugs) ? pkg.event_slugs : []
+  return eventSlugs.some(slug => CORPORATE_CONSULTATION_EVENT_SLUGS.has(canonicalizeEventSlug(slug)))
+}
+
 const includesNormalized = (values, target) => {
   const normalizedTarget = normalizeValue(target)
   if (!normalizedTarget) return true
@@ -754,48 +437,8 @@ function themeMatchesSlugSet(theme, usedSlugs) {
   })
 }
 
-/** General Pack — shown on most social decor events (not House Party theme). */
-const UNIVERSAL_SOCIAL_DECOR_THEME_SLUGS = [
-  'birthday-party',
-  'birthday-parties',
-]
 
-/** Extra themes per event (plus universal themes above). */
-const SOCIAL_EVENT_DECOR_THEME_SLUGS = {
-  anniversary: ['still-us', 'bubbles-and-black-tie', 'birthday-party', 'general-pack'],
-  'house-parties': ['house-party', 'house-parties', 'birthday-party', 'general-pack'],
-  'birthday-parties': [
-    'birthday-party',
-    'birthday-parties',
-    'bubbles-and-black-tie',
-    'bohemian',
-    'pastel',
-  ],
-  'baby-shower': ['a-little-honey', 'little-honey', 'oh-baby', 'birthday-party', 'general-pack'],
-  'bridal-shower': ['birthday-party', 'birthday-parties', 'general-pack'],
-  'diwali-party': ['birthday-party', 'birthday-parties', 'general-pack'],
-  mehendi: [],
-  engagement: ['sufi-night', 'ishq-sufiyana'],
-  proposal: [
-    'the-walk-to-forever',
-    'the-proposal-spotlight',
-    'our-story',
-    'our-private-corner',
-  ],
-}
-
-/** Social decor events that use only their own theme set — no house/birthday universal themes. */
-const EVENTS_EXCLUDING_UNIVERSAL_DECOR_THEMES = new Set([
-  'proposal',
-  'house-parties',
-  'birthday-parties',
-  'bachelors',
-  'bridal-shower',
-  'diwali-party',
-  'mehendi',
-])
-
-/** Never show General Pack theme or its decor packages (mehndi only). */
+/** Never show General Pack theme or its decor packages (mehendi only). */
 const EVENTS_WITHOUT_GENERAL_PACK_CATALOG = new Set(['mehendi'])
 
 /** Bridal / Diwali: theme step shows General Pack only; packages appear after theme selection. */
@@ -842,8 +485,8 @@ const DECOR_THEME_ALLOWLIST_ALIASES = {
 }
 
 /**
- * Parent picker themes → child package theme slugs (seed / CMS often link the child only).
- * Filtering by the parent must still match those packages.
+ * Parent picker themes -> child package theme slugs (CMS may link the child only).
+ * URL/parent theme matching only — not a package catalog.
  */
 const THEME_PARENT_CHILD_SLUGS = {
   'still-us': [
@@ -922,9 +565,6 @@ const THEME_PARENT_CHILD_SLUGS = {
   'our-private-corner': ['our-private-corner-2', 'our-private-corner-3'],
 }
 
-/** General Pack decor catalog events (Birthday Parties — not House Party). */
-const GENERAL_PACK_EVENT_SLUGS = ['birthday-parties', 'birthday-party']
-
 function isGeneralPackThemeSlug(themeSlug = '') {
   const normalized = normalizeThemeSlug(themeSlug)
   if (!normalized) return false
@@ -941,61 +581,10 @@ function isGeneralPackThemeSlug(themeSlug = '') {
   return aliased ? isGeneralPackThemeSlug(aliased) : false
 }
 
-function packageMatchesGeneralPackEvent(pkg, eventSlug = '', eventId = '') {
-  if (eventId && includesNormalized(pkg.event_ids, eventId)) return true
-  return GENERAL_PACK_EVENT_SLUGS.some(slug => includesEventSlug(pkg.event_slugs, slug))
-}
-
 function resolvePackageThemeFilterSlug(themeSlug = '') {
   const normalized = normalizeThemeSlug(themeSlug)
   const aliased = DECOR_THEME_ALLOWLIST_ALIASES[normalized]
   return aliased ? normalizeThemeSlug(aliased) : normalized
-}
-
-function isHousePartyThemeSlug(themeSlug = '') {
-  const normalized = normalizeThemeSlug(themeSlug)
-  return normalized === 'house-party' || normalized === 'house-parties'
-}
-
-function isHousePartyEventSlug(eventSlug = '') {
-  const normalized = canonicalizeEventSlug(eventSlug)
-  return normalized === 'house-parties' || normalized === 'house-party'
-}
-
-function isBubblesBlackTieThemeSlug(themeSlug = '') {
-  const normalized = normalizeThemeSlug(themeSlug)
-  const aliased = DECOR_THEME_ALLOWLIST_ALIASES[normalized] ?? normalized
-  return aliased === 'bubbles-and-black-tie'
-}
-
-function usesStrictDecorThemeCatalog(themeSlug = '', serviceSlug = '') {
-  if (normalizeServiceSlug(serviceSlug) !== 'decor') return false
-  return (
-    isBubblesBlackTieThemeSlug(themeSlug) ||
-    isHousePartyThemeSlug(themeSlug) ||
-    (isGeneralPackThemeSlug(themeSlug) && !isHousePartyThemeSlug(themeSlug))
-  )
-}
-
-function isAllowedGeneralPackPackage(pkg) {
-  const slug = String(pkg?.slug ?? '')
-    .trim()
-    .toLowerCase()
-  return Boolean(slug && GENERAL_PACK_ALLOWED_SLUGS.has(slug))
-}
-
-function isAllowedBubblesBlackTiePackage(pkg) {
-  const slug = String(pkg?.slug ?? '')
-    .trim()
-    .toLowerCase()
-  return Boolean(slug && BUBBLES_BLACK_TIE_ALLOWED_SLUGS.has(slug))
-}
-
-function isAllowedHousePartyPackage(pkg) {
-  const slug = String(pkg?.slug ?? '')
-    .trim()
-    .toLowerCase()
-  return Boolean(slug && HOUSE_PARTY_ALLOWED_SLUGS.has(slug))
 }
 
 /** Expand a theme filter slug to every slug that should count as a match. */
@@ -1019,8 +608,8 @@ export function expandThemeFilterSlugs(themeSlug = '') {
   }
 
   for (const key of [...expanded]) {
-    const aliased = DECOR_THEME_ALLOWLIST_ALIASES[key]
-    if (aliased) expanded.add(normalizeThemeSlug(aliased))
+    const aliasedKey = DECOR_THEME_ALLOWLIST_ALIASES[key]
+    if (aliasedKey) expanded.add(normalizeThemeSlug(aliasedKey))
 
     for (const [alias, canonical] of Object.entries(DECOR_THEME_ALLOWLIST_ALIASES)) {
       if (normalizeThemeSlug(canonical) === key) expanded.add(normalizeThemeSlug(alias))
@@ -1030,7 +619,7 @@ export function expandThemeFilterSlugs(themeSlug = '') {
   return expanded
 }
 
-/** True when package theme_slugs match the selected theme (including parent→child). */
+/** True when package theme_slugs match the selected theme (including parent->child). */
 export function packageThemeSlugsMatchFilter(packageThemeSlugs, themeSlug = '') {
   const filterSlugs = expandThemeFilterSlugs(themeSlug)
   if (!filterSlugs.size) return true
@@ -1072,55 +661,7 @@ function themeIsHouseParty(theme) {
   })
 }
 
-function buildAllowedSocialDecorThemeSlugSet(eventSlug = '') {
-  const canonicalEventSlug = canonicalizeEventSlug(eventSlug)
-
-  const allowed = new Set()
-
-  if (!EVENTS_EXCLUDING_UNIVERSAL_DECOR_THEMES.has(canonicalEventSlug)) {
-    for (const slug of UNIVERSAL_SOCIAL_DECOR_THEME_SLUGS) {
-      const normalized = slugifyThemeValue(slug)
-      if (normalized) allowed.add(normalized)
-    }
-  }
-
-  for (const slug of SOCIAL_EVENT_DECOR_THEME_SLUGS[canonicalEventSlug] ?? []) {
-    const normalized = slugifyThemeValue(slug)
-    if (normalized) allowed.add(normalized)
-  }
-
-  return allowed
-}
-
-function themeSlugMatchesAllowlist(normalizedThemeSlug, allowedSlugs) {
-  if (!normalizedThemeSlug) return false
-  if (allowedSlugs.has(normalizedThemeSlug)) return true
-
-  const canonicalSlug = DECOR_THEME_ALLOWLIST_ALIASES[normalizedThemeSlug]
-  if (canonicalSlug && allowedSlugs.has(canonicalSlug)) return true
-
-  for (const allowedSlug of allowedSlugs) {
-    const canonicalAllowed = DECOR_THEME_ALLOWLIST_ALIASES[allowedSlug] ?? allowedSlug
-    if (
-      normalizedThemeSlug === canonicalAllowed ||
-      normalizedThemeSlug.startsWith(`${canonicalAllowed}-`)
-    ) {
-      return true
-    }
-  }
-
-  return false
-}
-
-function themeMatchesAllowedSet(theme, allowedSlugs) {
-  return getThemeSlugVariants(theme).some(variant =>
-    themeSlugMatchesAllowlist(slugifyThemeValue(variant), allowedSlugs)
-  )
-}
-
-/** Restrict social decor theme pickers to event-specific + universal general-pack themes. */
-export function filterDecorThemesBySocialEvent(themes, eventSlug = '') {
-  const allowedSlugs = buildAllowedSocialDecorThemeSlugSet(eventSlug)
+function applyEventThemePickerRules(themes, eventSlug = '') {
   return dedupeThemesBySlug(themes).filter(theme => {
     if (eventBlocksGeneralPackCatalog(eventSlug) && themeIsGeneralPackCatalog(theme)) {
       return false
@@ -1128,13 +669,37 @@ export function filterDecorThemesBySocialEvent(themes, eventSlug = '') {
     if (eventUsesGeneralPackThemeOnly(eventSlug) && themeIsHouseParty(theme)) {
       return false
     }
-    return themeMatchesAllowedSet(theme, allowedSlugs)
+    return true
   })
 }
 
-/** Prefer themes linked on packages for this event; merge with the event theme allowlist. */
+/** Social decor theme pickers — themes from Strapi packages for this event. */
+export function filterDecorThemesBySocialEvent(themes, eventSlug = '', packages = []) {
+  const allThemes = applyEventThemePickerRules(themes, eventSlug)
+  const packageList = Array.isArray(packages) ? packages : []
+  if (!eventSlug || !packageList.length) return allThemes
+
+  const matchingPackages = filterPackages(packageList, {
+    categorySlug: '',
+    eventSlug,
+    eventId: '',
+    serviceSlug: 'decor',
+    serviceId: '',
+    themeSlug: '',
+    levelSlug: '',
+    levelId: '',
+  })
+
+  const usedThemeSlugs = collectThemeSlugsFromPackages(matchingPackages)
+  if (!usedThemeSlugs.size) return allThemes
+
+  const fromPackages = allThemes.filter(theme => themeMatchesSlugSet(theme, usedThemeSlugs))
+  return fromPackages.length > 0 ? fromPackages : allThemes
+}
+
+/** Prefer themes linked on packages for this event. */
 export function filterThemesByEventPackages(themes, packages, filters = {}) {
-  const allowedSlugs = buildAllowedSocialDecorThemeSlugSet(filters.eventSlug ?? '')
+  const allThemes = applyEventThemePickerRules(themes, filters.eventSlug ?? '')
 
   const matchingPackages = filterPackages(packages, {
     categorySlug: filters.categorySlug ?? '',
@@ -1148,20 +713,16 @@ export function filterThemesByEventPackages(themes, packages, filters = {}) {
   })
 
   const usedThemeSlugs = collectThemeSlugsFromPackages(matchingPackages)
-  const allThemes = dedupeThemesBySlug(Array.isArray(themes) ? themes : [])
 
   if (eventUsesGeneralPackThemeOnly(filters.eventSlug ?? '')) {
-    return allThemes
+    const generalThemes = allThemes.filter(theme => themeIsGeneralPackCatalog(theme))
+    return generalThemes.length > 0 ? generalThemes : allThemes
   }
 
-  const fromAllowlist = allThemes.filter(theme => themeMatchesAllowedSet(theme, allowedSlugs))
+  if (!usedThemeSlugs.size) return allThemes
+
   const fromPackages = allThemes.filter(theme => themeMatchesSlugSet(theme, usedThemeSlugs))
-  const merged = dedupeThemesBySlug([...fromAllowlist, ...fromPackages])
-
-  // No package↔theme links for this event yet — still show the full theme list.
-  if (!usedThemeSlugs.size) return fromAllowlist.length > 0 ? fromAllowlist : allThemes
-
-  return merged.length > 0 ? merged : allThemes
+  return fromPackages.length > 0 ? fromPackages : allThemes
 }
 
 export function filterPackages(packages, filters = {}) {
@@ -1177,25 +738,9 @@ export function filterPackages(packages, filters = {}) {
   } = filters
 
   const normalizedServiceSlug = normalizeServiceSlug(serviceSlug)
-
-  const corporateEventAllowlist = getCorporateEventPackageAllowlist(eventSlug)
   const canonicalEventSlug = canonicalizeEventSlug(eventSlug)
-  const usesGeneralPackCatalog =
-    normalizedServiceSlug === 'decor' &&
-    !eventBlocksGeneralPackCatalog(eventSlug) &&
-    (isGeneralPackThemeSlug(themeSlug) ||
-      (!themeSlug &&
-        GENERAL_PACK_EVENT_SLUGS.some(slug => eventSlugsMatch(eventSlug, slug))))
-
-  const usesStrictCatalog = usesStrictDecorThemeCatalog(themeSlug, normalizedServiceSlug)
 
   return (Array.isArray(packages) ? packages : []).filter(pkg => {
-    // Corporate event catalogs (Exhibition / Seminar): exact package list only.
-    // Blocks catering/bartending/sheesha bleed via universal occasion filters.
-    if (corporateEventAllowlist) {
-      return isAllowedCorporateEventPackage(pkg, corporateEventAllowlist)
-    }
-
     if (
       normalizedServiceSlug === 'decor' &&
       eventBlocksGeneralPackCatalog(canonicalEventSlug) &&
@@ -1223,14 +768,10 @@ export function filterPackages(packages, filters = {}) {
 
     const categoryMatched = includesNormalized(pkg.category_slugs, categorySlug)
     const eventMatched =
-      usesStrictCatalog
+      !eventSlug && !eventId
         ? true
-        : !eventSlug && !eventId
-          ? true
-          : usesGeneralPackCatalog
-            ? packageMatchesGeneralPackEvent(pkg, eventSlug, eventId)
-            : (eventId ? includesNormalized(pkg.event_ids, eventId) : false) ||
-              (eventSlug ? includesEventSlug(pkg.event_slugs, eventSlug) : false)
+        : (eventId ? includesNormalized(pkg.event_ids, eventId) : false) ||
+          (eventSlug ? includesEventSlug(pkg.event_slugs, eventSlug) : false)
 
     if (!categoryMatched || !eventMatched) {
       if (normalizedServiceSlug === 'decor') {
@@ -1241,99 +782,29 @@ export function filterPackages(packages, filters = {}) {
       }
     }
 
-    const serviceSlugs = Array.isArray(pkg.service_slugs) ? pkg.service_slugs : []
-    if (
-      normalizedServiceSlug &&
-      !serviceSlugs.some(value => normalizeServiceSlug(value) === normalizedServiceSlug)
-    ) {
+    if (normalizedServiceSlug && !packageHasServiceSlug(pkg, normalizedServiceSlug)) {
       return false
     }
+
     const packageServiceIds = Array.isArray(pkg.service_ids) ? pkg.service_ids.filter(Boolean) : []
     if (serviceId && packageServiceIds.length && !includesNormalized(packageServiceIds, serviceId)) {
       const serviceLaneMatched =
         Boolean(normalizedServiceSlug) &&
-        serviceSlugs.some(value => normalizeServiceSlug(value) === normalizedServiceSlug)
+        (Array.isArray(pkg?.service_slugs) ? pkg.service_slugs : []).some(
+          value => normalizeServiceSlug(value) === normalizedServiceSlug
+        )
       if (!serviceLaneMatched) return false
     }
 
-    // Catering listing = official catalog + Strapi budget_level (Level 1/2/3).
     if (normalizedServiceSlug === 'catering') {
-      if (!isAllowedCateringPackage(pkg)) return false
       const cmsLevel = getCateringCmsLevel(pkg)
-      if (!cmsLevel) return false
-      if (levelSlug && normalizeLevelSlug(levelSlug) !== cmsLevel) return false
+      if (levelSlug) {
+        if (!cmsLevel || normalizeLevelSlug(levelSlug) !== cmsLevel) return false
+      }
       return true
     }
 
-    // Bartending listing = Classic Pour, House Special, Signature Mix only.
-    if (normalizedServiceSlug === 'bartending') {
-      return isAllowedBartendingPackage(pkg)
-    }
-
-    // Furniture listing = Sit-Down / Mix & Mingle / Estate / Puja / Mehndi / Low Lounge only.
-    if (normalizedServiceSlug === 'rental-furniture') {
-      return isAllowedFurniturePackage(pkg)
-    }
-
-    // Furniture packages reuse decorpackages CMS shape — keep them out of Decor listings.
-    if (normalizedServiceSlug === 'decor' && isAllowedFurniturePackage(pkg)) {
-      return false
-    }
-
-    if (normalizedServiceSlug === 'decor') {
-      const primaryService = resolvePackagePrimaryServiceSlug(pkg)
-      if (primaryService && primaryService !== 'decor') {
-        return false
-      }
-    }
-
-    if (
-      normalizedServiceSlug === 'decor' &&
-      isHousePartyThemeSlug(themeSlug) &&
-      !isAllowedHousePartyPackage(pkg)
-    ) {
-      return false
-    }
-
-    if (
-      normalizedServiceSlug === 'decor' &&
-      isBubblesBlackTieThemeSlug(themeSlug) &&
-      !isAllowedBubblesBlackTiePackage(pkg)
-    ) {
-      return false
-    }
-
-    if (
-      normalizedServiceSlug === 'decor' &&
-      isGeneralPackThemeSlug(themeSlug) &&
-      !isHousePartyThemeSlug(themeSlug) &&
-      !isAllowedGeneralPackPackage(pkg)
-    ) {
-      return false
-    }
-
-    if (
-      normalizedServiceSlug === 'decor' &&
-      isGeneralPackThemeSlug(themeSlug) &&
-      !isHousePartyThemeSlug(themeSlug) &&
-      isAllowedHousePartyPackage(pkg)
-    ) {
-      return false
-    }
-
-    if (
-      normalizedServiceSlug === 'decor' &&
-      isBubblesBlackTieThemeSlug(themeSlug) &&
-      (isAllowedHousePartyPackage(pkg) || isAllowedGeneralPackPackage(pkg))
-    ) {
-      return false
-    }
-
-    if (
-      normalizedServiceSlug === 'decor' &&
-      !isBubblesBlackTieThemeSlug(themeSlug) &&
-      isAllowedBubblesBlackTiePackage(pkg)
-    ) {
+    if (normalizedServiceSlug === 'decor' && packageHasServiceSlug(pkg, 'rental-furniture')) {
       return false
     }
 
@@ -1342,7 +813,6 @@ export function filterPackages(packages, filters = {}) {
       return false
     }
 
-    // Skip Level chips only when browsing bartending/sheesha lanes.
     const skipLevelFilter =
       normalizedServiceSlug === 'bartending' || normalizedServiceSlug === 'sheesha'
     if (
