@@ -7,7 +7,7 @@
 | **Source of truth (product)** | [`docs/event with theme.docx`](./event%20with%20theme.docx) |
 | **Live CMS** | [https://strapi.elewen.co.in/admin](https://strapi.elewen.co.in/admin) |
 | **Live site** | [https://elewen.co.in](https://elewen.co.in) |
-| **Date** | 2026-09-25 |
+| **Date** | 2026-09-25 (updated 2026-09-27 after malware cleanup) |
 
 ---
 
@@ -43,6 +43,24 @@ Decor event themes on the live site were wrong relative to the client Word doc. 
 - Allow **CMS extras**: link more Themes on an Event in Strapi; they merge into the picker.
 - Seed CMS carefully on **deployed** Strapi so admin matches the Word doc.
 - Keep an instant frontend kill switch for rollback.
+
+---
+
+## 1a. Malware cleanup (2026-09-27)
+
+Infected commit `6839a41` hid obfuscated crypto-miner / payload code after whitespace in:
+
+- `frontend/postcss.config.js`
+- `admin-pannel/postcss.config.js`
+
+**Done:**
+
+1. Force-reset `origin/main`, `origin/dev`, `origin/hritik-dev` to clean `0135ba0`.
+2. Deleted `~/Downloads/elewen-main.zip` (payload archive).
+3. Re-shipped the event theme catalog as `a8abd0a` on those three branches.
+4. Verified remote `postcss.config.js` is the short clean Tailwind config only.
+
+Anyone who pulled `6839a41` should hard-reset to `origin/main` and reinstall dependencies on a clean tree. Rotate GitHub tokens / SSH keys if the zip or infected tree ran on a machine.
 
 ---
 
