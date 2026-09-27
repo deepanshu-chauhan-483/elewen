@@ -399,6 +399,26 @@ module.exports = {
       }
     }
 
+    if (isSeedEnabled('SEED_EVENT_THEME_MAP')) {
+      try {
+        const { seedEventThemeMap } = require('./seed/event-theme-map');
+        const mapResult = await seedEventThemeMap(strapi);
+        if (mapResult.rolledBack) {
+          strapi.log.info(
+            `[seed/event-theme-map] rollback done snapshot=${mapResult.snapshotPath}`
+          );
+        } else {
+          const updated = (mapResult.results || []).filter(item => item.updated).length;
+          const skipped = (mapResult.results || []).filter(item => item.skipped).length;
+          strapi.log.info(
+            `[seed/event-theme-map] updated=${updated}, skipped=${skipped}, themes=${mapResult.themeCount}, snapshot=${mapResult.snapshotPath}`
+          );
+        }
+      } catch (error) {
+        strapi.log.error('[seed/event-theme-map] Event theme map seed failed:', error);
+      }
+    }
+
     if (isSeedEnabled('SEED_COUPON_TEMPLATES')) {
       try {
         const { seedCouponTemplates } = require('./seed/coupon-templates');

@@ -16,6 +16,11 @@ import {
   normalizeServiceSlug,
 } from '../../lib/packageFilters'
 import {
+  filterThemesByCatalogAllowlist,
+  isWordDocDecorThemeCatalog,
+  resolveDecorThemeSlugAllowlist,
+} from '../../lib/decorEventThemeCatalog'
+import {
   buildServiceDestination,
   DECOR_THEME_CATEGORY_SLUG,
   DEFAULT_EVENT_CATEGORY_SLUG,
@@ -283,6 +288,16 @@ export default function PackageResultsHero({
 
   const themes = useMemo(() => {
     if (!isDecorService) return []
+
+    if (isWordDocDecorThemeCatalog()) {
+      const allowlist = resolveDecorThemeSlugAllowlist(eventSlug, [])
+      if (allowlist) {
+        return filterThemesByCatalogAllowlist(allThemes, allowlist).map(theme => ({
+          value: theme.slug,
+          label: theme.label ?? titleizeSlug(theme.slug),
+        }))
+      }
+    }
 
     const scopedThemes = filterDecorThemesBySocialEvent(allThemes, eventSlug, packages)
     const packageBackedThemes = filterThemesByEventPackages(scopedThemes, packages, {

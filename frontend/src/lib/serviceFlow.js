@@ -1,9 +1,18 @@
 import { canonicalizeEventSlug, normalizeServiceSlug } from './packageFilters'
+import {
+  isCatalogSkipThemeEvent,
+  isLegacyDecorThemeCatalog,
+  isWordDocDecorThemeCatalog,
+  resolveDecorEventFlow,
+} from './decorEventThemeCatalog'
 
 /** Events that show the coming-soon fallback instead of package listings. */
 const FALLBACK_ONLY_EVENT_SLUGS = new Set(['corporate-get-together', 'house-warming', 'diwali-party'])
 
-/** Social events that skip package listings and open book-a-consultation instead. */
+/**
+ * Legacy consultation set — restored when VITE_DECOR_THEME_CATALOG=legacy.
+ * Word-doc mode uses decorEventThemeCatalog instead (adds mehendi; wedding/engagement → unavailable).
+ */
 const CONSULTATION_ONLY_EVENT_SLUGS = new Set([
   'engagement',
   'sufi-night',
@@ -75,11 +84,22 @@ export function serviceAlwaysShowsPackagePrice(serviceSlug = '') {
 }
 
 export function isFallbackOnlyEvent(eventSlug = '') {
-  return FALLBACK_ONLY_EVENT_SLUGS.has(canonicalizeEventSlug(eventSlug))
+  // Diwali stays on this legacy fallback path until the client adds packages.
+  if (FALLBACK_ONLY_EVENT_SLUGS.has(canonicalizeEventSlug(eventSlug))) return true
+
+  if (isWordDocDecorThemeCatalog()) {
+    return resolveDecorEventFlow(eventSlug) === 'unavailable'
+  }
+
+  return false
 }
 
 export function isConsultationOnlyEvent(eventSlug = '') {
-  return CONSULTATION_ONLY_EVENT_SLUGS.has(canonicalizeEventSlug(eventSlug))
+  if (isLegacyDecorThemeCatalog()) {
+    return CONSULTATION_ONLY_EVENT_SLUGS.has(canonicalizeEventSlug(eventSlug))
+  }
+
+  return resolveDecorEventFlow(eventSlug) === 'consultation'
 }
 
 export const SERVICE_ROUTE_MAP = {
@@ -194,7 +214,12 @@ export function buildServiceDestination({
     SERVICE_ROUTE_MAP[serviceSlug] ?? SERVICE_ROUTE_MAP[normalizedServiceSlug] ?? '/package-listing'
 
   if (normalizedServiceSlug === 'decor') {
-    baseRoute = resolveDecorDestination(categorySlug)
+    if (isWordDocDecorThemeCatalog() && isCatalogSkipThemeEvent(eventSlug)) {
+      baseRoute = '/packages/decor-levels'
+      params.set('skipTheme', '1')
+    } else {
+      baseRoute = resolveDecorDestination(categorySlug)
+    }
   }
 
   return `${baseRoute}?${params.toString()}`

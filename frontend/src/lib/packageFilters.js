@@ -1,4 +1,8 @@
 import { inferLevelSlugFromCateringLevel } from './cateringPricing'
+import {
+  isWordDocDecorThemeCatalog,
+  resolveDecorEventFlow,
+} from './decorEventThemeCatalog'
 
 const normalizeValue = value =>
   String(value ?? '')
@@ -438,17 +442,25 @@ function themeMatchesSlugSet(theme, usedSlugs) {
 }
 
 
-/** Never show General Pack theme or its decor packages (mehendi only). */
+/** Never show General Pack theme or its decor packages (mehendi only) — legacy path. */
 const EVENTS_WITHOUT_GENERAL_PACK_CATALOG = new Set(['mehendi'])
 
-/** Bridal / Diwali: theme step shows General Pack only; packages appear after theme selection. */
+/** Bridal / Diwali: theme step shows General Pack only — legacy path (bridal becomes skip in word-doc mode). */
 const GENERAL_PACK_THEME_ONLY_EVENT_SLUGS = new Set(['bridal-shower', 'diwali-party'])
 
 function eventBlocksGeneralPackCatalog(eventSlug = '') {
+  if (isWordDocDecorThemeCatalog()) {
+    // Mehendi is consultation in word-doc mode; package strip is unused when redirected.
+    return false
+  }
   return EVENTS_WITHOUT_GENERAL_PACK_CATALOG.has(canonicalizeEventSlug(eventSlug))
 }
 
 function eventUsesGeneralPackThemeOnly(eventSlug = '') {
+  if (isWordDocDecorThemeCatalog()) {
+    // Bridal skips themes; Diwali stays out of the word-doc map (legacy fallback still owns it).
+    return false
+  }
   return GENERAL_PACK_THEME_ONLY_EVENT_SLUGS.has(canonicalizeEventSlug(eventSlug))
 }
 
@@ -463,6 +475,9 @@ const DECOR_EVENTS_REQUIRING_THEME_SELECTION = new Set([
 ])
 
 function eventRequiresDecorThemeSelection(eventSlug = '') {
+  if (isWordDocDecorThemeCatalog()) {
+    return resolveDecorEventFlow(eventSlug) === 'theme_step'
+  }
   if (eventUsesGeneralPackThemeOnly(eventSlug)) return true
   return DECOR_EVENTS_REQUIRING_THEME_SELECTION.has(canonicalizeEventSlug(eventSlug))
 }

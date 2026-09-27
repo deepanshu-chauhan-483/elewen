@@ -2,13 +2,19 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import EventFlowLayout from '../components/event-flow/EventFlowLayout'
 import { useScrollToTop } from '../hooks/useScrollToTop'
-import { useDecorThemeOptions, useFilteredServiceOptions } from '../hooks/useEventTypes'
+import { useDecorThemeOptions, useEventsByCategory, useFilteredServiceOptions } from '../hooks/useEventTypes'
 import { usePackages } from '../hooks/usePackages'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import BrandedImage from '../components/common/BrandedImage'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { filterDecorThemesBySocialEvent, filterThemesByEventPackages } from '../lib/packageFilters'
+import {
+  filterThemesByCatalogAllowlist,
+  isCatalogSkipThemeEvent,
+  isWordDocDecorThemeCatalog,
+  resolveDecorThemeSlugAllowlist,
+} from '../lib/decorEventThemeCatalog'
 import {
   buildServiceSelectionBackTo,
   DECOR_THEME_CATEGORY_SLUG,
@@ -18,6 +24,7 @@ import {
   resolveServiceLaneId,
   SERVICES_FLOW_KEY,
 } from '../lib/serviceFlow'
+import { eventSlugsMatch } from '../lib/packageFilters'
 
 import themeImg2 from '../assets/images/IMG_7768.jpg'
 import themeImg3 from '../assets/images/IMG_0749.jpg'
@@ -184,9 +191,18 @@ export default function DecorThemePage() {
 
   const themesQuery = useDecorThemeOptions(resolvedServiceId)
   const packagesQuery = usePackages()
+  const eventsQuery = useEventsByCategory(categoryId || DEFAULT_EVENT_CATEGORY_SLUG)
   const { data: themes = [] } = themesQuery
   const { data: packages = [] } = packagesQuery
+  const { data: categoryEvents = [] } = eventsQuery
   const isStrapiLoading = useStrapiPageLoading(themesQuery, packagesQuery)
+
+  const cmsEventThemes = useMemo(() => {
+    const match = (Array.isArray(categoryEvents) ? categoryEvents : []).find(event =>
+      eventSlugsMatch(event?.slug, eventId)
+    )
+    return Array.isArray(match?.themes) ? match.themes : []
+  }, [categoryEvents, eventId])
 
   const themesWithImages = useMemo(
     () => enrichThemesWithPackageImages(themes, packages),
@@ -194,6 +210,21 @@ export default function DecorThemePage() {
   )
 
   const eventScopedThemes = useMemo(() => {
+    if (isWordDocDecorThemeCatalog()) {
+      const allowlist = resolveDecorThemeSlugAllowlist(eventId, cmsEventThemes)
+      if (allowlist) {
+        const fromCatalog = filterThemesByCatalogAllowlist(themesWithImages, allowlist)
+        // CMS-only extras may not be in wizard/fallback options yet — append stubs.
+        const existing = new Set(
+          fromCatalog.flatMap(theme => [theme.slug, theme.label].filter(Boolean))
+        )
+        const extras = cmsEventThemes
+          .filter(theme => theme?.slug && !existing.has(theme.slug) && !existing.has(theme.label))
+          .filter(theme => allowlist.includes(String(theme.slug).toLowerCase()))
+        return [...fromCatalog, ...extras]
+      }
+    }
+
     const byEvent = filterDecorThemesBySocialEvent(themesWithImages, eventId, packages)
 
     return filterThemesByEventPackages(byEvent, packages, {
@@ -203,7 +234,15 @@ export default function DecorThemePage() {
       serviceSlug: 'decor',
       serviceId: resolvedServiceId,
     })
-  }, [categoryId, eventId, eventNumericId, packages, resolvedServiceId, themesWithImages])
+  }, [
+    categoryId,
+    cmsEventThemes,
+    eventId,
+    eventNumericId,
+    packages,
+    resolvedServiceId,
+    themesWithImages,
+  ])
 
   const paginationKey = `${categoryId}:${eventId}:${serviceSlug}:${debouncedSearchValue.trim().toLowerCase()}`
   const [paginationState, setPaginationState] = useState({
@@ -313,6 +352,10 @@ export default function DecorThemePage() {
 
   if (flow !== SERVICES_FLOW_KEY && isFallbackOnlyEvent(eventId)) {
     return <Navigate to="/fallback-screen" replace />
+  }
+
+  if (flow !== SERVICES_FLOW_KEY && isCatalogSkipThemeEvent(eventId)) {
+    return <Navigate to={skipToPackages} replace />
   }
 
   if (categoryId !== DECOR_THEME_CATEGORY_SLUG || serviceSlug !== 'decor') {

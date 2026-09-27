@@ -367,6 +367,14 @@ const mapEventCard = event => {
     category: (event.parent_event?.name ?? '').trim(),
     categorySlug: event.parent_event?.slug?.trim() || slugify(event.parent_event?.name),
     image: toAbsoluteStrapiUrl(event.icon?.url),
+    decor_flow: event.decor_flow ?? null,
+    themes: (Array.isArray(event.themes) ? event.themes : []).map((theme, index) => ({
+      id: theme?.id ?? index,
+      slug: theme?.slug?.trim() || slugify(theme?.name ?? theme?.id ?? index),
+      label: theme?.name?.trim() || theme?.label || '',
+      name: theme?.name?.trim() || '',
+      preview_image: resolveStrapiMediaUrl(theme?.preview_image),
+    })),
   }
 }
 
@@ -745,6 +753,7 @@ export function useEventsByCategory(categorySlug) {
           'filters[is_active][$eq]': 'true',
           'populate[0]': 'parent_event',
           'populate[1]': 'icon',
+          'populate[2]': 'themes',
           sort: 'name:asc',
         })
         return orderEventsForCategory(data.map(mapEventCard), categorySlug)

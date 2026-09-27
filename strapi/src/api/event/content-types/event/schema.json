@@ -70,6 +70,15 @@
     },
     "tagline": {
       "type": "string"
+    },
+    "decor_flow": {
+      "type": "enumeration",
+      "enum": ["theme_step", "skip_to_packages", "consultation", "unavailable"]
+    },
+    "themes": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::theme.theme"
     }
   }
 }

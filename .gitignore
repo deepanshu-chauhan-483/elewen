@@ -12,6 +12,7 @@ strapi/.tmp/
 strapi/build/
 strapi/dist/
 strapi/public/uploads/
+strapi/src/seed/.snapshots/
 
 # ─── Frontend build ──────────────────────────────────────────────────
 frontend/dist/
