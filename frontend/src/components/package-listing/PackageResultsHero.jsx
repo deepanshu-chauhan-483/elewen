@@ -171,12 +171,15 @@ export default function PackageResultsHero({
       categorySlug: categorySlug || DEFAULT_EVENT_CATEGORY_SLUG,
       serviceSlug,
       serviceId: serviceIdParam || '',
-      themeSlug,
+      // Do not shrink the Event pill by the active Theme. General Pack (birthday-party)
+      // packages often sit on Birthday only; filtering events by theme then drops
+      // House/Anniversary/Baby and a cleanup effect strips `event` from the URL.
+      themeSlug: '',
       // Don't shrink the Event pill by the active Level — keep Birthday Parties etc. visible
       // the same way Theme stays available on decor.
       levelSlug: serviceSlug === 'catering' ? '' : levelSlug,
     }),
-    [categorySlug, levelSlug, serviceIdParam, serviceSlug, themeSlug]
+    [categorySlug, levelSlug, serviceIdParam, serviceSlug]
   )
 
   const categories = useMemo(
