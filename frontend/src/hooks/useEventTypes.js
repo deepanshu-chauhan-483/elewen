@@ -755,14 +755,15 @@ export function useEventsByCategory(categorySlug) {
       if (USE_FALLBACK) return fallback
 
       try {
-        // Prefer themes + preview_image. Fall back to shallow themes if nested 400s.
+        // Object-style populate keeps Event.icon AND Theme.preview_image.
+        // Indexed populate[0]/[1] + nested themes drops icons on prod Strapi.
         let data
         try {
           ;({ data } = await strapiGet('/events', {
             'filters[parent_event][slug][$eq]': categorySlug,
             'filters[is_active][$eq]': 'true',
-            'populate[0]': 'parent_event',
-            'populate[1]': 'icon',
+            'populate[parent_event]': 'true',
+            'populate[icon]': 'true',
             'populate[themes][populate][0]': 'preview_image',
             sort: 'name:asc',
           }))
