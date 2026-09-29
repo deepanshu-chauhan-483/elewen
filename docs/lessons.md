@@ -443,3 +443,15 @@
 **Consulted sources:** `CheckoutCouponSection.jsx`, `useDiscountBanners.js`, `listSharedDiscountBanners`
 
 **Prevention guidance:** Banner-shared public coupons belong in the cart dropdown with account coupons; do not rely on copy/paste only.
+
+## 2026-09-29: Decor theme picker ignored Strapi Event.themes
+
+**Root cause:** `useEventsByCategory` requested nested `populate[themes][populate][preview_image]`, which returns HTTP 400 on prod Strapi. The catch path returned hardcoded fallback events with empty themes, so the UI used package-derived themes instead of CMS `Event.themes`.
+
+**Failure symptoms:** House/Anniversary/Baby theme lists mismatched Strapi (missing General Pack; Anniversary showed extra package themes). Wedding/Engagement still appeared from fallback cards.
+
+**Fix details:** Populate themes shallowly (`populate[2]=themes` only). Prefer CMS theme cards when present; pass `decor_flow` into skip/consultation/unavailable helpers; hide unavailable events in pickers without deleting CMS rows; alias CMS slugs `bachelors-bachelorette` and `event`; Diwali maps to consultation.
+
+**Consulted sources:** Strapi REST probes on `strapi.elewen.co.in`, `useEventTypes.js`, `decorEventThemeCatalog.js`, `serviceFlow.js`
+
+**Prevention guidance:** Never nest theme media populate on `/events` unless the live Strapi version accepts it; probe the exact query against prod before shipping. Soft-hide events with `is_active=false` / Unpublish / `decor_flow=unavailable` — never delete catalog events.
