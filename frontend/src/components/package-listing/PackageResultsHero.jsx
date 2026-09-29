@@ -14,6 +14,7 @@ import {
   filterEventsWithPackages,
   filterThemesByEventPackages,
   normalizeServiceSlug,
+  packageThemeSlugsMatchFilter,
 } from '../../lib/packageFilters'
 import {
   buildThemesFromCmsEventThemes,
@@ -163,7 +164,12 @@ export default function PackageResultsHero({
 
   const { data: allCategories = [] } = useEventCategoryOptions()
   const { data: allServices = [] } = useFilteredServiceOptions(SERVICE_ORDER)
-  const { data: allEvents = [] } = useEventsByCategory(categorySlug || DEFAULT_EVENT_CATEGORY_SLUG)
+  const {
+    data: allEvents = [],
+    isPending: eventsPending,
+    isPlaceholderData: eventsPlaceholder,
+    isFetching: eventsFetching,
+  } = useEventsByCategory(categorySlug || DEFAULT_EVENT_CATEGORY_SLUG)
   const { data: packages = [] } = usePackages()
 
   const eventPackageFilters = useMemo(
@@ -363,6 +369,13 @@ export default function PackageResultsHero({
       return
     }
 
+    // Wait for real CMS events (placeholder fallback has no Event.themes). Otherwise
+    // General Pack (birthday-party) is stripped before CMS themes arrive and the
+    // levels page bounces back to the theme picker.
+    if (eventsPending || eventsPlaceholder || (eventsFetching && themes.length === 0)) {
+      return
+    }
+
     const themeStillAllowed = themes.some(theme => {
       const themeValue = String(theme.value ?? '')
         .trim()
@@ -378,7 +391,12 @@ export default function PackageResultsHero({
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '')
 
-      return themeKey && filterKey && (themeKey === filterKey || themeKey.startsWith(`${filterKey}-`) || filterKey.startsWith(`${themeKey}-`))
+      if (themeKey && filterKey && (themeKey === filterKey || themeKey.startsWith(`${filterKey}-`) || filterKey.startsWith(`${themeKey}-`))) {
+        return true
+      }
+
+      // General Pack ↔ birthday-party aliases
+      return packageThemeSlugsMatchFilter([themeValue, themeKey], themeSlug)
     })
     if (themeStillAllowed) return
 
@@ -392,6 +410,9 @@ export default function PackageResultsHero({
     )
   }, [
     categorySlug,
+    eventsFetching,
+    eventsPending,
+    eventsPlaceholder,
     isDecorService,
     setSearchParams,
     themeSlug,
@@ -401,6 +422,7 @@ export default function PackageResultsHero({
   useEffect(() => {
     if (!eventSlug && !eventId) return
     if (!serviceSlug) return
+    if (eventsPending || eventsPlaceholder) return
 
     const selectedStillAllowed = events.some(
       event =>
@@ -418,7 +440,15 @@ export default function PackageResultsHero({
       },
       { replace: true }
     )
-  }, [eventId, eventSlug, events, serviceSlug, setSearchParams])
+  }, [
+    eventId,
+    eventSlug,
+    events,
+    eventsPending,
+    eventsPlaceholder,
+    serviceSlug,
+    setSearchParams,
+  ])
 
   const levels = useMemo(() => {
     const fromCms = sortLevelsForHero(allLevels)
