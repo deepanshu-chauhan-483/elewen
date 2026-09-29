@@ -59,6 +59,40 @@ function themeSlugKey(theme) {
     .replace(/^-+|-+$/g, '')
 }
 
+/** General Pack is birthday-party in URLs; Strapi may store the image on general-pack. */
+function themePreviewAliasKeys(slug = '') {
+  const key = themeSlugKey({ slug })
+  if (!key) return []
+  if (key === 'birthday-party' || key === 'general-pack') {
+    return ['birthday-party', 'general-pack']
+  }
+  if (key === 'bubbles-and-black-tie' || key === 'bubbles-and-black-tie-1') {
+    return ['bubbles-and-black-tie', 'bubbles-and-black-tie-1']
+  }
+  return [key]
+}
+
+/** Prefer Theme.preview_image from /themes (catalog), including General Pack aliases. */
+function enrichThemesWithCatalogPreviews(themes, catalogThemes = []) {
+  const previewBySlug = new Map()
+
+  for (const catalogTheme of Array.isArray(catalogThemes) ? catalogThemes : []) {
+    if (!catalogTheme?.preview_image) continue
+    for (const key of themePreviewAliasKeys(catalogTheme.slug ?? catalogTheme.label)) {
+      if (key && !previewBySlug.has(key)) previewBySlug.set(key, catalogTheme.preview_image)
+    }
+  }
+
+  return (Array.isArray(themes) ? themes : []).map(theme => {
+    if (theme?.preview_image) return theme
+    for (const key of themePreviewAliasKeys(theme?.slug ?? theme?.label)) {
+      const preview = previewBySlug.get(key)
+      if (preview) return { ...theme, preview_image: preview }
+    }
+    return theme
+  })
+}
+
 function enrichThemesWithPackageImages(themes, packages) {
   const previewBySlug = new Map()
 
@@ -67,17 +101,20 @@ function enrichThemesWithPackageImages(themes, packages) {
     if (!cover) continue
 
     for (const rawSlug of pkg.theme_slugs ?? []) {
-      const key = themeSlugKey({ slug: rawSlug })
-      if (key && !previewBySlug.has(key)) previewBySlug.set(key, cover)
+      for (const key of themePreviewAliasKeys(rawSlug)) {
+        if (key && !previewBySlug.has(key)) previewBySlug.set(key, cover)
+      }
     }
   }
 
   return themes.map(theme => {
     if (theme.preview_image) return theme
 
-    const slug = themeSlugKey(theme)
-    const packageImage = slug ? previewBySlug.get(slug) : null
-    return packageImage ? { ...theme, preview_image: packageImage } : theme
+    for (const key of themePreviewAliasKeys(theme?.slug ?? theme?.label)) {
+      const packageImage = previewBySlug.get(key)
+      if (packageImage) return { ...theme, preview_image: packageImage }
+    }
+    return theme
   })
 }
 
@@ -219,7 +256,10 @@ export default function DecorThemePage() {
 
   const eventScopedThemes = useMemo(() => {
     if (isWordDocDecorThemeCatalog() && cmsScopedThemes.length) {
-      return enrichThemesWithPackageImages(cmsScopedThemes, packages)
+      // Event.themes are shallow (no preview_image). Use /themes previews first,
+      // then package covers only as a last resort.
+      const withCatalogPreviews = enrichThemesWithCatalogPreviews(cmsScopedThemes, themes)
+      return enrichThemesWithPackageImages(withCatalogPreviews, packages)
     }
 
     const byEvent = filterDecorThemesBySocialEvent(themesWithImages, eventId, packages)
@@ -238,6 +278,7 @@ export default function DecorThemePage() {
     eventNumericId,
     packages,
     resolvedServiceId,
+    themes,
     themesWithImages,
   ])
 

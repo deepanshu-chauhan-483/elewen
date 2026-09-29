@@ -487,10 +487,17 @@ const buildThemePreviewBySlug = themes => {
   for (const theme of Array.isArray(themes) ? themes : []) {
     if (!theme?.preview_image) continue
 
-    for (const key of [
+    const keys = [
       slugify(theme.slug ?? theme.label),
       decorThemeCanonicalSlug(theme),
-    ]) {
+    ]
+    // General Pack image often lives on slug general-pack; cards use birthday-party.
+    const canonical = decorThemeCanonicalSlug(theme)
+    if (canonical === 'birthday-party' || slugify(theme.slug ?? '') === 'general-pack') {
+      keys.push('birthday-party', 'general-pack')
+    }
+
+    for (const key of keys) {
       if (key && !previewBySlug.has(key)) previewBySlug.set(key, theme.preview_image)
     }
   }
@@ -748,16 +755,27 @@ export function useEventsByCategory(categorySlug) {
       if (USE_FALLBACK) return fallback
 
       try {
-        // Nested themes.preview_image populate 400s on prod Strapi — load themes
-        // shallow; preview images come from /themes + package covers instead.
-        const { data } = await strapiGet('/events', {
-          'filters[parent_event][slug][$eq]': categorySlug,
-          'filters[is_active][$eq]': 'true',
-          'populate[0]': 'parent_event',
-          'populate[1]': 'icon',
-          'populate[2]': 'themes',
-          sort: 'name:asc',
-        })
+        // Prefer themes + preview_image. Fall back to shallow themes if nested 400s.
+        let data
+        try {
+          ;({ data } = await strapiGet('/events', {
+            'filters[parent_event][slug][$eq]': categorySlug,
+            'filters[is_active][$eq]': 'true',
+            'populate[0]': 'parent_event',
+            'populate[1]': 'icon',
+            'populate[themes][populate][0]': 'preview_image',
+            sort: 'name:asc',
+          }))
+        } catch {
+          ;({ data } = await strapiGet('/events', {
+            'filters[parent_event][slug][$eq]': categorySlug,
+            'filters[is_active][$eq]': 'true',
+            'populate[0]': 'parent_event',
+            'populate[1]': 'icon',
+            'populate[2]': 'themes',
+            sort: 'name:asc',
+          }))
+        }
         return orderEventsForCategory(data.map(mapEventCard), categorySlug)
       } catch {
         return fallback
