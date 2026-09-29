@@ -244,12 +244,7 @@ export default function PackageResultsHero({
   const events = useMemo(
     () =>
       (Array.isArray(eventsWithPackages) ? eventsWithPackages : [])
-        .filter(event => {
-          const cmsFlow = event?.decor_flow ?? ''
-          if (isCatalogUnavailableEvent(event?.slug, cmsFlow)) return false
-          if (isFallbackOnlyEvent(event?.slug, cmsFlow)) return false
-          return true
-        })
+        .filter(event => !isCatalogUnavailableEvent(event?.slug, event?.decor_flow ?? ''))
         .map(event => ({
           value: event.slug,
           label: event.title ?? titleizeSlug(event.slug),

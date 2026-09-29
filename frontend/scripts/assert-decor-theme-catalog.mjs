@@ -51,6 +51,9 @@ assert(
   resolveDecorEventFlow('house-parties', 'unavailable') === 'unavailable',
   'CMS decor_flow can mark unavailable without delete'
 )
+assert(resolveDecorEventFlow('holi-party') === null, 'unlisted event → no catalog override')
+assert(resolveDecorEventFlow('movie-night') === null, 'unlisted event → no catalog override')
+assert(resolveDecorEventFlow('bachelors') === null, 'bare bachelors slug not remapped to bridal')
 
 assert(
   resolveDecorThemeSlugAllowlist('birthday-parties') === null,

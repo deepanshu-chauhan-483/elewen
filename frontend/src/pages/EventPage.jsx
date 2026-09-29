@@ -6,10 +6,7 @@ import { useEventCategoryOptions, useEventsByCategory } from '../hooks/useEventT
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
-import {
-  buildEventSelectionDestination,
-  isFallbackOnlyEvent,
-} from '../lib/serviceFlow'
+import { buildEventSelectionDestination } from '../lib/serviceFlow'
 import { isCatalogUnavailableEvent } from '../lib/decorEventThemeCatalog'
 
 const FLOW_STEPS = [
@@ -108,13 +105,10 @@ export default function EventPage() {
   const filteredEvents = useMemo(() => {
     const query = debouncedSearchValue.trim().toLowerCase()
 
-    // Hide unavailable events (Wedding / Engagement). Do not delete in Strapi —
-    // unpublish or set is_active=false; decor_flow=unavailable also hides here.
+    // Only hide Wedding / Engagement (decor_flow=unavailable). Do not delete in Strapi —
+    // prefer Unpublish or is_active=false. Do not hide other coming-soon events here.
     const visibleEvents = (Array.isArray(events) ? events : []).filter(event => {
-      const cmsFlow = event?.decor_flow ?? ''
-      if (isCatalogUnavailableEvent(event?.slug, cmsFlow)) return false
-      if (isFallbackOnlyEvent(event?.slug, cmsFlow)) return false
-      return true
+      return !isCatalogUnavailableEvent(event?.slug, event?.decor_flow ?? '')
     })
 
     if (!query) return visibleEvents

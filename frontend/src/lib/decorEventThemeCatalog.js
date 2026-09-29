@@ -1,10 +1,12 @@
 /**
  * Word-doc baseline for decor event → flow / themes (docs/event with theme.docx).
  *
+ * Scope: only the mapped social events below. Any other event slug is unchanged
+ * (null flow → existing legacy / package behaviour).
+ *
  * Hybrid:
- * - Hardcoded map is the live baseline for known events.
+ * - Hardcoded map is the live baseline for those known events.
  * - CMS Event.themes (and optional decor_flow) can add extras or override flow.
- * - Diwali is intentionally absent (client packages later).
  *
  * Rollback: set VITE_DECOR_THEME_CATALOG=legacy to restore pre-catalog Sets/fallback.
  */
@@ -26,9 +28,8 @@ const EVENT_SLUG_ALIASES = {
   'house-party': 'house-parties',
   'baby-showers': 'baby-shower',
   'bridal-showers': 'bridal-shower',
-  // CMS Bridal Shower row still uses bachelor slug — treat as bridal skip flow.
+  // Active CMS Bridal Shower row uses this slug (inactive bridal-shower also exists).
   'bachelors-bachelorette': 'bridal-shower',
-  bachelors: 'bridal-shower',
   'diwali-parties': 'diwali-party',
   weddings: 'wedding',
 }
@@ -76,7 +77,7 @@ export const WORD_DOC_THEME_SLUGS = {
 
 /**
  * Word-doc event map. Keys are canonical event slugs (see canonicalizeEventSlug).
- * Diwali is omitted on purpose.
+ * Only these events are overridden; everything else is left alone.
  */
 export const WORD_DOC_EVENT_DECOR_MAP = {
   'birthday-parties': {
