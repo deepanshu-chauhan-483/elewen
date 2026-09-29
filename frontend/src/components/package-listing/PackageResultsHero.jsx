@@ -16,9 +16,9 @@ import {
   normalizeServiceSlug,
 } from '../../lib/packageFilters'
 import {
-  filterThemesByCatalogAllowlist,
+  buildThemesFromCmsEventThemes,
+  isCatalogUnavailableEvent,
   isWordDocDecorThemeCatalog,
-  resolveDecorThemeSlugAllowlist,
 } from '../../lib/decorEventThemeCatalog'
 import {
   buildServiceDestination,
@@ -243,11 +243,19 @@ export default function PackageResultsHero({
 
   const events = useMemo(
     () =>
-      (Array.isArray(eventsWithPackages) ? eventsWithPackages : []).map(event => ({
-        value: event.slug,
-        label: event.title ?? titleizeSlug(event.slug),
-        id: event.id != null ? String(event.id) : '',
-      })),
+      (Array.isArray(eventsWithPackages) ? eventsWithPackages : [])
+        .filter(event => {
+          const cmsFlow = event?.decor_flow ?? ''
+          if (isCatalogUnavailableEvent(event?.slug, cmsFlow)) return false
+          if (isFallbackOnlyEvent(event?.slug, cmsFlow)) return false
+          return true
+        })
+        .map(event => ({
+          value: event.slug,
+          label: event.title ?? titleizeSlug(event.slug),
+          id: event.id != null ? String(event.id) : '',
+          decor_flow: event.decor_flow ?? '',
+        })),
     [eventsWithPackages]
   )
 
@@ -285,18 +293,33 @@ export default function PackageResultsHero({
   const { data: allThemes = [] } = useDecorThemeOptions(isDecorService ? resolvedServiceId : '')
 
   const { data: allLevels = [] } = useBudgetLevelOptions(resolvedServiceId)
+  const cmsEventThemes = useMemo(() => {
+    const eventsList = Array.isArray(allEvents) ? allEvents : []
+
+    const byId = eventId
+      ? eventsList.find(event => String(event?.id ?? '') === String(eventId))
+      : null
+    if (Array.isArray(byId?.themes) && byId.themes.length) return byId.themes
+
+    const targetSlug = selectedEventValue || eventSlug
+    const bySlug = targetSlug
+      ? eventsList.find(event => eventSlugsMatch(event?.slug, targetSlug))
+      : null
+    return Array.isArray(bySlug?.themes) ? bySlug.themes : []
+  }, [allEvents, eventId, eventSlug, selectedEventValue])
+  const cmsScopedThemes = useMemo(
+    () => buildThemesFromCmsEventThemes(cmsEventThemes),
+    [cmsEventThemes]
+  )
 
   const themes = useMemo(() => {
     if (!isDecorService) return []
 
-    if (isWordDocDecorThemeCatalog()) {
-      const allowlist = resolveDecorThemeSlugAllowlist(eventSlug, [])
-      if (allowlist) {
-        return filterThemesByCatalogAllowlist(allThemes, allowlist).map(theme => ({
-          value: theme.slug,
-          label: theme.label ?? titleizeSlug(theme.slug),
-        }))
-      }
+    if (isWordDocDecorThemeCatalog() && cmsScopedThemes.length) {
+      return cmsScopedThemes.map(theme => ({
+        value: theme.slug,
+        label: theme.label ?? titleizeSlug(theme.slug),
+      }))
     }
 
     const scopedThemes = filterDecorThemesBySocialEvent(allThemes, eventSlug, packages)
@@ -315,6 +338,7 @@ export default function PackageResultsHero({
   }, [
     allThemes,
     categorySlug,
+    cmsScopedThemes,
     eventId,
     eventSlug,
     isDecorService,
@@ -501,17 +525,18 @@ export default function PackageResultsHero({
       }
 
       if (key === 'event') {
-        if (isFallbackOnlyEvent(value)) {
+        const matchedEvent = events.find(event => event.value === value) ?? null
+        const cmsDecorFlow = matchedEvent?.decor_flow ?? ''
+
+        if (isFallbackOnlyEvent(value, cmsDecorFlow)) {
           navigate('/fallback-screen')
           return
         }
 
-        if (isConsultationOnlyEvent(value)) {
+        if (isConsultationOnlyEvent(value, cmsDecorFlow)) {
           navigate('/book-consultation')
           return
         }
-
-        const matchedEvent = events.find(event => event.value === value) ?? null
 
         nextParams.set('event', value)
         if (matchedEvent?.id) nextParams.set('eventId', matchedEvent.id)

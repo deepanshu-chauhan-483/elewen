@@ -6,7 +6,11 @@ import { useEventCategoryOptions, useEventsByCategory } from '../hooks/useEventT
 import CmsPageLoader from '../components/common/CmsPageLoader'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
-import { buildEventSelectionDestination } from '../lib/serviceFlow'
+import {
+  buildEventSelectionDestination,
+  isFallbackOnlyEvent,
+} from '../lib/serviceFlow'
+import { isCatalogUnavailableEvent } from '../lib/decorEventThemeCatalog'
 
 const FLOW_STEPS = [
   { id: 1, label: 'Category' },
@@ -39,6 +43,7 @@ function EventCard({ categorySlug, event }) {
     categorySlug,
     eventSlug: event.slug,
     eventId: event.id != null ? String(event.id) : '',
+    cmsDecorFlow: event.decor_flow ?? '',
   })
 
   return (
@@ -102,9 +107,19 @@ export default function EventPage() {
 
   const filteredEvents = useMemo(() => {
     const query = debouncedSearchValue.trim().toLowerCase()
-    if (!query) return events
 
-    return events.filter(
+    // Hide unavailable events (Wedding / Engagement). Do not delete in Strapi —
+    // unpublish or set is_active=false; decor_flow=unavailable also hides here.
+    const visibleEvents = (Array.isArray(events) ? events : []).filter(event => {
+      const cmsFlow = event?.decor_flow ?? ''
+      if (isCatalogUnavailableEvent(event?.slug, cmsFlow)) return false
+      if (isFallbackOnlyEvent(event?.slug, cmsFlow)) return false
+      return true
+    })
+
+    if (!query) return visibleEvents
+
+    return visibleEvents.filter(
       event =>
         event.title.toLowerCase().includes(query) || event.description.toLowerCase().includes(query)
     )

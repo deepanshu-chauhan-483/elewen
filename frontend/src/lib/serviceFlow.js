@@ -83,23 +83,25 @@ export function serviceAlwaysShowsPackagePrice(serviceSlug = '') {
   )
 }
 
-export function isFallbackOnlyEvent(eventSlug = '') {
-  // Diwali stays on this legacy fallback path until the client adds packages.
-  if (FALLBACK_ONLY_EVENT_SLUGS.has(canonicalizeEventSlug(eventSlug))) return true
-
+export function isFallbackOnlyEvent(eventSlug = '', cmsDecorFlow = '') {
   if (isWordDocDecorThemeCatalog()) {
-    return resolveDecorEventFlow(eventSlug) === 'unavailable'
+    const flow = resolveDecorEventFlow(eventSlug, cmsDecorFlow)
+    if (flow === 'unavailable') return true
+    // Catalog / CMS flow wins over the legacy coming-soon slug set (e.g. Diwali).
+    if (flow === 'consultation' || flow === 'theme_step' || flow === 'skip_to_packages') {
+      return false
+    }
   }
 
-  return false
+  return FALLBACK_ONLY_EVENT_SLUGS.has(canonicalizeEventSlug(eventSlug))
 }
 
-export function isConsultationOnlyEvent(eventSlug = '') {
+export function isConsultationOnlyEvent(eventSlug = '', cmsDecorFlow = '') {
   if (isLegacyDecorThemeCatalog()) {
     return CONSULTATION_ONLY_EVENT_SLUGS.has(canonicalizeEventSlug(eventSlug))
   }
 
-  return resolveDecorEventFlow(eventSlug) === 'consultation'
+  return resolveDecorEventFlow(eventSlug, cmsDecorFlow) === 'consultation'
 }
 
 export const SERVICE_ROUTE_MAP = {
@@ -191,12 +193,13 @@ export function buildServiceDestination({
   serviceSlug = '',
   serviceId = '',
   flow = '',
+  cmsDecorFlow = '',
 }) {
-  if (isFallbackOnlyEvent(eventSlug)) {
+  if (isFallbackOnlyEvent(eventSlug, cmsDecorFlow)) {
     return '/fallback-screen'
   }
 
-  if (isConsultationOnlyEvent(eventSlug)) {
+  if (isConsultationOnlyEvent(eventSlug, cmsDecorFlow)) {
     return BOOK_CONSULTATION_PATH
   }
 
@@ -214,7 +217,7 @@ export function buildServiceDestination({
     SERVICE_ROUTE_MAP[serviceSlug] ?? SERVICE_ROUTE_MAP[normalizedServiceSlug] ?? '/package-listing'
 
   if (normalizedServiceSlug === 'decor') {
-    if (isWordDocDecorThemeCatalog() && isCatalogSkipThemeEvent(eventSlug)) {
+    if (isWordDocDecorThemeCatalog() && isCatalogSkipThemeEvent(eventSlug, cmsDecorFlow)) {
       baseRoute = '/packages/decor-levels'
       params.set('skipTheme', '1')
     } else {
@@ -279,12 +282,13 @@ export function buildEventSelectionDestination({
   categorySlug = '',
   eventSlug = '',
   eventId = '',
+  cmsDecorFlow = '',
 }) {
-  if (isFallbackOnlyEvent(eventSlug)) {
+  if (isFallbackOnlyEvent(eventSlug, cmsDecorFlow)) {
     return '/fallback-screen'
   }
 
-  if (isConsultationOnlyEvent(eventSlug)) {
+  if (isConsultationOnlyEvent(eventSlug, cmsDecorFlow)) {
     return BOOK_CONSULTATION_PATH
   }
 

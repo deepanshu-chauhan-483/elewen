@@ -10,10 +10,9 @@ import BrandedImage from '../components/common/BrandedImage'
 import { useStrapiPageLoading } from '../hooks/useStrapiPageLoading'
 import { filterDecorThemesBySocialEvent, filterThemesByEventPackages } from '../lib/packageFilters'
 import {
-  filterThemesByCatalogAllowlist,
+  buildThemesFromCmsEventThemes,
   isCatalogSkipThemeEvent,
   isWordDocDecorThemeCatalog,
-  resolveDecorThemeSlugAllowlist,
 } from '../lib/decorEventThemeCatalog'
 import {
   buildServiceSelectionBackTo,
@@ -197,32 +196,30 @@ export default function DecorThemePage() {
   const { data: categoryEvents = [] } = eventsQuery
   const isStrapiLoading = useStrapiPageLoading(themesQuery, packagesQuery)
 
-  const cmsEventThemes = useMemo(() => {
-    const match = (Array.isArray(categoryEvents) ? categoryEvents : []).find(event =>
+  const matchedCmsEvent = useMemo(() => {
+    return (Array.isArray(categoryEvents) ? categoryEvents : []).find(event =>
       eventSlugsMatch(event?.slug, eventId)
     )
-    return Array.isArray(match?.themes) ? match.themes : []
   }, [categoryEvents, eventId])
+
+  const cmsEventThemes = useMemo(
+    () => (Array.isArray(matchedCmsEvent?.themes) ? matchedCmsEvent.themes : []),
+    [matchedCmsEvent]
+  )
+  const cmsDecorFlow = matchedCmsEvent?.decor_flow ?? ''
 
   const themesWithImages = useMemo(
     () => enrichThemesWithPackageImages(themes, packages),
     [themes, packages]
   )
+  const cmsScopedThemes = useMemo(
+    () => buildThemesFromCmsEventThemes(cmsEventThemes),
+    [cmsEventThemes]
+  )
 
   const eventScopedThemes = useMemo(() => {
-    if (isWordDocDecorThemeCatalog()) {
-      const allowlist = resolveDecorThemeSlugAllowlist(eventId, cmsEventThemes)
-      if (allowlist) {
-        const fromCatalog = filterThemesByCatalogAllowlist(themesWithImages, allowlist)
-        // CMS-only extras may not be in wizard/fallback options yet — append stubs.
-        const existing = new Set(
-          fromCatalog.flatMap(theme => [theme.slug, theme.label].filter(Boolean))
-        )
-        const extras = cmsEventThemes
-          .filter(theme => theme?.slug && !existing.has(theme.slug) && !existing.has(theme.label))
-          .filter(theme => allowlist.includes(String(theme.slug).toLowerCase()))
-        return [...fromCatalog, ...extras]
-      }
+    if (isWordDocDecorThemeCatalog() && cmsScopedThemes.length) {
+      return enrichThemesWithPackageImages(cmsScopedThemes, packages)
     }
 
     const byEvent = filterDecorThemesBySocialEvent(themesWithImages, eventId, packages)
@@ -236,7 +233,7 @@ export default function DecorThemePage() {
     })
   }, [
     categoryId,
-    cmsEventThemes,
+    cmsScopedThemes,
     eventId,
     eventNumericId,
     packages,
@@ -346,15 +343,15 @@ export default function DecorThemePage() {
     )
   }
 
-  if (flow !== SERVICES_FLOW_KEY && isConsultationOnlyEvent(eventId)) {
+  if (flow !== SERVICES_FLOW_KEY && isConsultationOnlyEvent(eventId, cmsDecorFlow)) {
     return <Navigate to="/book-consultation" replace />
   }
 
-  if (flow !== SERVICES_FLOW_KEY && isFallbackOnlyEvent(eventId)) {
+  if (flow !== SERVICES_FLOW_KEY && isFallbackOnlyEvent(eventId, cmsDecorFlow)) {
     return <Navigate to="/fallback-screen" replace />
   }
 
-  if (flow !== SERVICES_FLOW_KEY && isCatalogSkipThemeEvent(eventId)) {
+  if (flow !== SERVICES_FLOW_KEY && isCatalogSkipThemeEvent(eventId, cmsDecorFlow)) {
     return <Navigate to={skipToPackages} replace />
   }
 

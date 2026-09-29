@@ -748,6 +748,8 @@ export function useEventsByCategory(categorySlug) {
       if (USE_FALLBACK) return fallback
 
       try {
+        // Nested themes.preview_image populate 400s on prod Strapi — load themes
+        // shallow; preview images come from /themes + package covers instead.
         const { data } = await strapiGet('/events', {
           'filters[parent_event][slug][$eq]': categorySlug,
           'filters[is_active][$eq]': 'true',

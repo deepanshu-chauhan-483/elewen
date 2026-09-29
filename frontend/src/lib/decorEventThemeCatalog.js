@@ -17,6 +17,8 @@ const EVENT_SLUG_ALIASES = {
   anniversaries: 'anniversary',
   'anniversary-celebrations': 'anniversary',
   mehndi: 'mehendi',
+  // CMS Mehndi row currently uses slug "event" — map until client renames in Strapi.
+  event: 'mehendi',
   proposals: 'proposal',
   'birthday-celebrations': 'birthday-parties',
   birthday: 'birthday-parties',
@@ -24,6 +26,9 @@ const EVENT_SLUG_ALIASES = {
   'house-party': 'house-parties',
   'baby-showers': 'baby-shower',
   'bridal-showers': 'bridal-shower',
+  // CMS Bridal Shower row still uses bachelor slug — treat as bridal skip flow.
+  'bachelors-bachelorette': 'bridal-shower',
+  bachelors: 'bridal-shower',
   'diwali-parties': 'diwali-party',
   weddings: 'wedding',
 }
@@ -123,6 +128,10 @@ export const WORD_DOC_EVENT_DECOR_MAP = {
     flow: 'consultation',
     themeSlugs: [],
   },
+  'diwali-party': {
+    flow: 'consultation',
+    themeSlugs: [],
+  },
   wedding: {
     flow: 'unavailable',
     themeSlugs: [],
@@ -157,6 +166,10 @@ function themeSlugAliases(slug) {
   if (normalized === 'bubbles-black-tie') return ['bubbles-and-black-tie']
   if (normalized === 'little-honey') return ['a-little-honey']
   return [normalized]
+}
+
+function canonicalThemeSlug(slug) {
+  return themeSlugAliases(slug)[0] ?? ''
 }
 
 function collectCmsThemeSlugs(cmsThemes = []) {
@@ -207,26 +220,48 @@ export function isCatalogThemeStepEvent(eventSlug = '', cmsDecorFlow = '') {
 }
 
 /**
- * Allowed theme slugs for the picker: Word-doc baseline ∪ CMS Event.themes extras.
- * Returns null when catalog mode is off or event is not in the Word-doc map and CMS has no themes
+ * Allowed theme slugs for the picker from CMS Event.themes only.
+ * Returns null when catalog mode is off or Event.themes has no usable slugs
  * (caller should keep package-derived filtering).
  */
-export function resolveDecorThemeSlugAllowlist(eventSlug = '', cmsThemes = []) {
+export function resolveDecorThemeSlugAllowlist(_eventSlug = '', cmsThemes = []) {
   if (isLegacyDecorThemeCatalog()) return null
 
-  const entry = getWordDocDecorEntry(eventSlug)
   const cmsSlugs = collectCmsThemeSlugs(cmsThemes)
+  return cmsSlugs.length ? cmsSlugs : null
+}
 
-  if (!entry && cmsSlugs.length === 0) return null
+/** Build a unique, picker-ready theme list from Event.themes. */
+export function buildThemesFromCmsEventThemes(cmsThemes = []) {
+  const seen = new Set()
+  const themes = []
 
-  const baseline = entry?.themeSlugs ?? []
-  const merged = []
-  for (const slug of [...baseline, ...cmsSlugs]) {
-    for (const alias of themeSlugAliases(slug)) {
-      if (alias && !merged.includes(alias)) merged.push(alias)
-    }
+  for (const theme of Array.isArray(cmsThemes) ? cmsThemes : []) {
+    const sourceSlug = theme?.slug ?? theme?.label ?? theme?.name
+    const canonicalSlug = canonicalThemeSlug(sourceSlug)
+    if (!canonicalSlug || seen.has(canonicalSlug)) continue
+    seen.add(canonicalSlug)
+
+    const rawLabel = theme?.label ?? theme?.name ?? canonicalSlug
+    const label =
+      canonicalSlug === WORD_DOC_THEME_SLUGS.generalPack ? 'General Pack' : rawLabel
+
+    themes.push({
+      id: theme?.id ?? canonicalSlug,
+      slug: canonicalSlug,
+      label,
+      name: theme?.name ?? theme?.label ?? canonicalSlug,
+      preview_image: theme?.preview_image ?? null,
+      display_order: theme?.display_order ?? null,
+    })
   }
-  return merged
+
+  return themes
+}
+
+/** True when decor flow should hide the event from pickers (CMS or Word-doc). */
+export function isCatalogUnavailableEvent(eventSlug = '', cmsDecorFlow = '') {
+  return resolveDecorEventFlow(eventSlug, cmsDecorFlow) === 'unavailable'
 }
 
 /** Keep theme options whose slug/label matches the allowlist (or all aliases). */
