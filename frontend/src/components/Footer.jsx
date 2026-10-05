@@ -16,7 +16,7 @@ const footerNav = [
     labelWidth: 'min-w-[85px] shrink-0',
     links: [
       { label: 'Vendor Registration', to: '/vendor-registration' },
-      { label: 'Instagram', href: 'https://www.instagram.com/' },
+      { label: 'Instagram', href: 'https://www.instagram.com/elewen.events/' },
     ],
   },
   {

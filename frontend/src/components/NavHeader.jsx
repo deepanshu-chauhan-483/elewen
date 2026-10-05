@@ -49,7 +49,7 @@ const BASE_LINKS = [
 const SOCIALS = [
   {
     label: 'Instagram',
-    href: 'https://www.instagram.com/elewen.events?igsh=NnVlbjMzaWc0MnBk',
+    href: 'https://www.instagram.com/elewen.events/',
   },
 ]
 

@@ -154,7 +154,7 @@ export default function ContactUsPage() {
                   </div>
 
                   <a
-                    href="https://instagram.com"
+                    href="https://www.instagram.com/elewen.events/"
                     target="_blank"
                     rel="noreferrer"
                     aria-label="Instagram"

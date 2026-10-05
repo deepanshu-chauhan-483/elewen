@@ -4613,7 +4613,13 @@ const SplitInfoSection = () => {
                 'Follow along for real celebrations, styling ideas, and behind-the-scenes moments from the events we love creating.'}
             </p>
 
-            <button className="mt-[20px] lg:mt-[16px] box-border flex flex-row items-center justify-center px-[12px] lg:px-[16px] py-[6px] lg:py-[8px] gap-[6px] lg:gap-[16px] border border-[#591902] rounded-[25px] lg:rounded-[56px] bg-transparent text-[#591902] hover:bg-[#591902] hover:text-white transition-colors group">
+            <a
+              href={ig.cta_url ?? 'https://www.instagram.com/elewen.events/'}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Elewen on Instagram"
+              className="mt-[20px] lg:mt-[16px] box-border flex flex-row items-center justify-center px-[12px] lg:px-[16px] py-[6px] lg:py-[8px] gap-[6px] lg:gap-[16px] border border-[#591902] rounded-[25px] lg:rounded-[56px] bg-transparent text-[#591902] hover:bg-[#591902] hover:text-white transition-colors group cursor-pointer"
+            >
               <span className="text-[#591902] group-hover:text-white transition-colors font-medium text-[12px] leading-[150%] font-['Poppins'] lg:font-sans text-center lg:text-left">
                 {ig.cta_label ?? 'Join Our Instagram'}
               </span>
@@ -4630,7 +4636,7 @@ const SplitInfoSection = () => {
                 <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
                 <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
               </svg>
-            </button>
+            </a>
           </div>
 
           <img
