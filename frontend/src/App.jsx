@@ -14,6 +14,7 @@ import Footer from './components/Footer'
 import CmsPageLoader from './components/common/CmsPageLoader'
 import { CompactViewportSync } from './hooks/useCompactViewport'
 import GoogleAnalytics from './components/common/GoogleAnalytics'
+import SeoHead from './components/common/SeoHead'
 import {
   getLocationScrollKey,
   readLocationScroll,
@@ -248,6 +249,7 @@ function AppLayout() {
     <>
       <GoogleAuthRedirectBridge />
       <GoogleAnalytics />
+      <SeoHead />
       <ScrollToTop />
       <CompactViewportSync />
       {!hideGlobalChrome && <NavHeader />}

@@ -1,0 +1,25 @@
+# https://elewen.co.in/robots.txt
+User-agent: *
+Allow: /
+
+# Booking funnel and account flows - crawlable for UX, not for indexing
+Disallow: /event-flow/
+Disallow: /packages/
+Disallow: /package-listing
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /new-password
+Disallow: /auth/
+Disallow: /cart
+Disallow: /single-package-cart
+Disallow: /checkout
+Disallow: /payment/
+Disallow: /booking-confirmation
+Disallow: /consultation-confirmation
+Disallow: /sample-test-booking
+Disallow: /user-dashboard
+Disallow: /fallback-screen
+
+Sitemap: https://elewen.co.in/sitemap.xml
