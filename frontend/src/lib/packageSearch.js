@@ -212,6 +212,22 @@ function packageMatchesDirectTitleSearch(pkg, query) {
   return fuzzyMatchText(blob, q) || textContainsTerm(blob, q)
 }
 
+/** Event links ("diwali-party") so searching an event name finds its packages. */
+function packageEventSearchBlob(pkg) {
+  const eventSlugs = [
+    ...(Array.isArray(pkg?.event_slugs) ? pkg.event_slugs : []),
+    ...(Array.isArray(pkg?.category_slugs) ? pkg.category_slugs : []),
+  ]
+
+  return eventSlugs
+    .flatMap(slug => {
+      const raw = String(slug ?? '').trim()
+      if (!raw) return []
+      return [raw, raw.replace(/-/g, ' ')]
+    })
+    .join(' ')
+}
+
 function packageSearchBlob(pkg) {
   const includes = Array.isArray(pkg?.includes)
     ? pkg.includes
@@ -231,6 +247,7 @@ function packageSearchBlob(pkg) {
     pkg?.desc,
     includes.join(' '),
     pkg?.level_slug,
+    packageEventSearchBlob(pkg),
   ]
     .filter(Boolean)
     .join(' ')
